@@ -80,7 +80,7 @@ export default function Home() {
               Inline Live Editing
             </h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Klik langsung pada nama siswa untuk mengubah dan menyimpan otomatis ke server API.
+              Klik langsung pada nama siswa untuk mengubah dan menyimpan otomatis ke LocalStorage browser.
             </p>
           </div>
         </div>

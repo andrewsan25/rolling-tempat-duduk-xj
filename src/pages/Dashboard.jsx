@@ -5,9 +5,9 @@ import {
   ArrowUpCircle,
   RotateCcw,
   CheckCircle2,
-  AlertCircle,
   Monitor,
   Info,
+  HardDrive,
 } from 'lucide-react';
 import DeskCard from '../components/DeskCard';
 import {
@@ -18,158 +18,112 @@ import {
   SNAKE_LABELS,
 } from '../utils/seatingLogic';
 
-const API_BASE_URL = 'http://localhost:5000/api/seats';
+const STORAGE_KEY = 'rolling_tempat_duduk_xj_seats';
+
+// Normalisasi data dari LocalStorage agar selalu berjumlah 40 kursi sesuai urutan indeks 0-39
+function normalizeStoredSeats(storedData) {
+  const defaults = createDefaultSeats();
+  if (!Array.isArray(storedData) || storedData.length === 0) return defaults;
+
+  return defaults.map((defSeat, idx) => {
+    const matched =
+      storedData.find(
+        (item) =>
+          item.snakeIndex === idx ||
+          item.id_posisi === idx ||
+          item.kode_kursi === SNAKE_LABELS[idx] ||
+          item.id === idx + 1
+      ) || storedData[idx];
+
+    if (!matched) return defSeat;
+    return {
+      ...defSeat,
+      id: matched.id ?? defSeat.id,
+      nama_siswa: matched.nama_siswa ?? matched.name ?? defSeat.nama_siswa,
+    };
+  });
+}
+
+function loadSeatsFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const defaults = createDefaultSeats();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
+      return defaults;
+    }
+    const parsed = JSON.parse(raw);
+    return normalizeStoredSeats(parsed);
+  } catch (err) {
+    console.error('Gagal membaca LocalStorage:', err);
+    return createDefaultSeats();
+  }
+}
+
+function saveSeatsToStorage(seatsData) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seatsData));
+    return true;
+  } catch (err) {
+    console.error('Gagal menyimpan ke LocalStorage:', err);
+    return false;
+  }
+}
 
 export default function Dashboard() {
-  const [seats, setSeats] = useState(() => createDefaultSeats());
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
+  const [seats, setSeats] = useState(() => loadSeatsFromStorage());
   const [toast, setToast] = useState(null);
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
-  const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type });
+  const showToast = useCallback((message) => {
+    setToast({ message });
     setTimeout(() => {
       setToast((prev) => (prev?.message === message ? null : prev));
-    }, 3000);
+    }, 2500);
   }, []);
 
-  // Normalisasi data dari API agar selalu berjumlah 40 kursi sesuai urutan indeks 0-39
-  const normalizeApiSeats = (apiData) => {
-    const defaults = createDefaultSeats();
-    if (!Array.isArray(apiData) || apiData.length === 0) return defaults;
-
-    return defaults.map((defSeat, idx) => {
-      const matched =
-        apiData.find(
-          (item) =>
-            item.snakeIndex === idx ||
-            item.id_posisi === idx ||
-            item.kode_kursi === SNAKE_LABELS[idx] ||
-            item.id === idx + 1
-        ) || apiData[idx];
-
-      if (!matched) return defSeat;
-      return {
-        ...defSeat,
-        id: matched.id ?? defSeat.id,
-        nama_siswa: matched.nama_siswa ?? matched.name ?? defSeat.nama_siswa,
-      };
-    });
-  };
-
-  // 1. GET /api/seats saat komponen dimuat
+  // Pastikan data tersimpan ke LocalStorage setiap kali state seats berubah
   useEffect(() => {
-    let isMounted = true;
+    saveSeatsToStorage(seats);
+  }, [seats]);
 
-    async function fetchSeats() {
-      setLoading(true);
-      try {
-        const response = await fetch(API_BASE_URL);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (isMounted) {
-          const normalized = normalizeApiSeats(Array.isArray(data) ? data : data.data);
-          setSeats(normalized);
-          setIsOfflineMode(false);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setIsOfflineMode(true);
-          showToast(
-            'Server localhost:5000 belum aktif — berjalan dalam mode lokal (fallback).',
-            'warning'
-          );
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    fetchSeats();
-    return () => {
-      isMounted = false;
-    };
-  }, [showToast]);
-
-  // 2. PATCH /api/seats/:id saat nama siswa diedit (onBlur / Enter)
+  // 1. Update satu nama kursi saat diedit (onBlur / Enter)
   const handleUpdateSingleSeat = async (seatId, newName, snakeIndex) => {
-    // Optimistic UI update
-    setSeats((prev) =>
-      prev.map((s, idx) =>
+    setSeats((prev) => {
+      const updated = prev.map((s, idx) =>
         idx === snakeIndex ? { ...s, nama_siswa: newName } : s
-      )
-    );
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/${seatId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: seatId,
-          snakeIndex,
-          kode_kursi: SNAKE_LABELS[snakeIndex],
-          nama_siswa: newName,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Gagal menyimpan ke backend');
-      setIsOfflineMode(false);
-      showToast(`Nama pada kursi ${SNAKE_LABELS[snakeIndex]} berhasil disimpan.`);
-    } catch (error) {
-      setIsOfflineMode(true);
-      showToast(
-        `Kursi ${SNAKE_LABELS[snakeIndex]} diperbarui di state lokal (Backend offline).`,
-        'warning'
       );
-    }
+      saveSeatsToStorage(updated);
+      return updated;
+    });
+    showToast(`Nama pada kursi ${SNAKE_LABELS[snakeIndex]} berhasil disimpan.`);
   };
 
-  // Helper untuk mengirim PUT /api/seats/batch setelah rotasi
-  const syncBatchToBackend = async (updatedSeats, labelRotasi) => {
-    setSyncing(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/batch`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ seats: updatedSeats }),
-      });
-
-      if (!response.ok) throw new Error('Gagal melakukan batch update');
-      setIsOfflineMode(false);
-      showToast(`${labelRotasi} berhasil disimpan ke server!`);
-    } catch (error) {
-      setIsOfflineMode(true);
-      showToast(
-        `${labelRotasi} diterapkan di UI (Backend localhost:5000 offline).`,
-        'warning'
-      );
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  // 3. Tombol Rotasi Biasa (Geser 1 Langkah mengikuti Snake Pattern)
+  // 2. Tombol Rotasi Biasa (Geser 1 Langkah mengikuti Snake Pattern)
   const handleNormalRotation = () => {
-    const nextSeats = rotateSnakeOneStep(seats);
-    setSeats(nextSeats);
-    syncBatchToBackend(nextSeats, 'Rotasi Biasa (Geser 1)');
+    setSeats((prev) => {
+      const nextSeats = rotateSnakeOneStep(prev);
+      saveSeatsToStorage(nextSeats);
+      return nextSeats;
+    });
+    showToast('Rotasi Biasa (Geser 1) berhasil diterapkan & disimpan!');
   };
 
-  // 4. Tombol Rotasi 5 Hari (Kursi Kanan Maju 1 Baris di Kolom yang Sama)
+  // 3. Tombol Rotasi 5 Hari (Kursi Kanan Maju 1 Baris di Kolom yang Sama)
   const handleFiveDayRotation = () => {
-    const nextSeats = rotateFiveDaysRightSeats(seats);
-    setSeats(nextSeats);
-    syncBatchToBackend(nextSeats, 'Rotasi 5 Hari (Kursi Kanan Maju 1 Baris)');
+    setSeats((prev) => {
+      const nextSeats = rotateFiveDaysRightSeats(prev);
+      saveSeatsToStorage(nextSeats);
+      return nextSeats;
+    });
+    showToast('Rotasi 5 Hari (Kursi Kanan Maju 1 Baris) berhasil disimpan!');
   };
 
-  // Reset ke urutan awal (Siswa A .. Siswa nn)
+  // 4. Reset ke urutan awal (Siswa A .. Siswa nn)
   const handleResetDefault = () => {
     const defaults = createDefaultSeats();
     setSeats(defaults);
-    syncBatchToBackend(defaults, 'Reset Formasi Awal');
+    saveSeatsToStorage(defaults);
+    showToast('Formasi berhasil di-reset ke urutan awal.');
   };
 
   return (
@@ -183,11 +137,7 @@ export default function Dashboard() {
             exit={{ opacity: 0, y: -16, scale: 0.95 }}
             className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white/85 backdrop-blur-xl border border-[#eaeaea] shadow-lg text-sm font-medium text-gray-800"
           >
-            {toast.type === 'warning' ? (
-              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-            )}
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
             <span>{toast.message}</span>
           </motion.div>
         )}
@@ -200,23 +150,17 @@ export default function Dashboard() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
               Denah Tempat Duduk Kelas
             </h1>
-            <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                isOfflineMode
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isOfflineMode ? 'bg-amber-500' : 'bg-emerald-500'
-                }`}
-              />
-              {isOfflineMode ? 'Mode Lokal' : 'API Terhubung'}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Tersimpan di LocalStorage
             </span>
           </div>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Klik pada nama siswa untuk mengedit langsung (tekan <kbd className="px-1.5 py-0.5 text-[11px] bg-gray-100 rounded border border-gray-200">Enter</kbd> atau klik di luar untuk menyimpan).
+            Klik pada nama siswa untuk mengedit langsung (tekan{' '}
+            <kbd className="px-1.5 py-0.5 text-[11px] bg-gray-100 rounded border border-gray-200">
+              Enter
+            </kbd>{' '}
+            atau klik di luar untuk menyimpan otomatis).
           </p>
         </div>
 
@@ -224,17 +168,15 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleNormalRotation}
-            disabled={syncing || loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-[0.98] text-white font-medium text-sm shadow-xs hover:shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-[0.98] text-white font-medium text-sm shadow-xs hover:shadow-sm transition-all cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className="w-4 h-4" />
             <span>Rotasi Biasa (Geser 1)</span>
           </button>
 
           <button
             onClick={handleFiveDayRotation}
-            disabled={syncing || loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 active:scale-[0.98] text-white font-medium text-sm shadow-xs hover:shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 active:scale-[0.98] text-white font-medium text-sm shadow-xs hover:shadow-sm transition-all cursor-pointer"
           >
             <ArrowUpCircle className="w-4 h-4 text-blue-400" />
             <span>Rotasi 5 Hari (Kanan Maju 1 Baris)</span>
@@ -242,7 +184,6 @@ export default function Dashboard() {
 
           <button
             onClick={handleResetDefault}
-            disabled={syncing || loading}
             title="Kembalikan ke urutan default"
             className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200/80 text-gray-700 font-medium text-sm transition-all cursor-pointer"
           >
@@ -261,54 +202,43 @@ export default function Dashboard() {
       </div>
 
       {/* Grid 5 Baris x 4 Kolom Meja Ganda */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 20 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="h-28 rounded-2xl bg-white border border-[#eaeaea] p-4 animate-pulse"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {[0, 1, 2, 3, 4].map((row) => {
-            const isEvenRow = row % 2 === 0;
-            return (
-              <div key={row} className="space-y-2">
-                {/* Indikator Baris & Arah Snake */}
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-semibold text-gray-500">
-                    Baris {row + 1}
-                  </span>
-                  <span className="text-[11px] font-medium text-gray-400">
-                    {isEvenRow
-                      ? 'Alur Ular: Kiri → Kanan'
-                      : 'Alur Ular: Kanan → Kiri'}
-                  </span>
-                </div>
-
-                {/* 4 Kolom Meja pada Baris Ini */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                  {[0, 1, 2, 3].map((col) => {
-                    const { leftSeat, rightSeat } = getDeskSeats(seats, row, col);
-                    return (
-                      <DeskCard
-                        key={`desk-${row}-${col}`}
-                        row={row}
-                        col={col}
-                        leftSeat={leftSeat}
-                        rightSeat={rightSeat}
-                        onUpdateName={handleUpdateSingleSeat}
-                      />
-                    );
-                  })}
-                </div>
+      <div className="space-y-5">
+        {[0, 1, 2, 3, 4].map((row) => {
+          const isEvenRow = row % 2 === 0;
+          return (
+            <div key={row} className="space-y-2">
+              {/* Indikator Baris & Arah Snake */}
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-semibold text-gray-500">
+                  Baris {row + 1}
+                </span>
+                <span className="text-[11px] font-medium text-gray-400">
+                  {isEvenRow
+                    ? 'Alur Ular: Kiri → Kanan'
+                    : 'Alur Ular: Kanan → Kiri'}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* 4 Kolom Meja pada Baris Ini */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                {[0, 1, 2, 3].map((col) => {
+                  const { leftSeat, rightSeat } = getDeskSeats(seats, row, col);
+                  return (
+                    <DeskCard
+                      key={`desk-${row}-${col}`}
+                      row={row}
+                      col={col}
+                      leftSeat={leftSeat}
+                      rightSeat={rightSeat}
+                      onUpdateName={handleUpdateSingleSeat}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Legend / Keterangan Alur */}
       <div className="mt-8 p-4 rounded-2xl bg-white/70 border border-[#eaeaea] flex flex-wrap items-center justify-between gap-4 text-xs text-gray-500">
@@ -326,8 +256,9 @@ export default function Dashboard() {
             <span>Kursi Kanan (Maju 1 Baris saat Rotasi 5 Hari: HH → ee → R → O → B → HH)</span>
           </span>
         </div>
-        <span className="text-gray-400">
-          Endpoint: <code className="text-gray-600">{API_BASE_URL}</code>
+        <span className="inline-flex items-center gap-1.5 text-gray-400">
+          <HardDrive className="w-3.5 h-3.5" />
+          <span>Key: <code className="text-gray-600">{STORAGE_KEY}</code></span>
         </span>
       </div>
     </div>
