@@ -108,6 +108,8 @@ export function getDefaultPortalData() {
         amount: 110000,
       },
     ],
+    personalNotes: {},
+    registeredStudents: [],
   };
 }
 
@@ -139,6 +141,13 @@ export async function getPortalData() {
         : defaults.announcements,
       piket: Array.isArray(parsed.piket) ? parsed.piket : defaults.piket,
       finance: Array.isArray(parsed.finance) ? parsed.finance : defaults.finance,
+      personalNotes:
+        parsed.personalNotes && typeof parsed.personalNotes === 'object'
+          ? parsed.personalNotes
+          : {},
+      registeredStudents: Array.isArray(parsed.registeredStudents)
+        ? parsed.registeredStudents
+        : [],
     };
   } catch {
     return defaults;
@@ -157,6 +166,14 @@ export async function savePortalData(portalPayload) {
     finance: Array.isArray(portalPayload?.finance)
       ? portalPayload.finance
       : defaults.finance,
+    personalNotes:
+      portalPayload?.personalNotes &&
+      typeof portalPayload.personalNotes === 'object'
+        ? portalPayload.personalNotes
+        : {},
+    registeredStudents: Array.isArray(portalPayload?.registeredStudents)
+      ? portalPayload.registeredStudents
+      : [],
   };
 
   const supabase = getSupabaseClient();

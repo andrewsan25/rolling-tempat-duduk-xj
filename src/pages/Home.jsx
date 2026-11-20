@@ -9,20 +9,42 @@ import {
   UserCheck,
   Lock,
   Settings,
+  UserPlus,
 } from 'lucide-react';
-import { ROLES_CONFIG, authenticateUser } from '../utils/authRoles';
+import {
+  ROLES_CONFIG,
+  authenticateUser,
+  registerStudentByName,
+} from '../utils/authRoles';
 
 export default function Home({ currentUser, onLogin, onOpenSettings }) {
   const navigate = useNavigate();
+  const [authMode, setAuthMode] = useState('student'); // 'student' | 'officer'
+  const [studentName, setStudentName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleFormSubmit = (e) => {
+  const handleStudentRegister = (e) => {
+    e.preventDefault();
+    const clean = studentName.trim();
+    if (!clean) {
+      setErrorMsg('Silakan tulis nama Anda terlebih dahulu.');
+      return;
+    }
+    setErrorMsg('');
+    const studentSession = registerStudentByName(clean);
+    if (studentSession) {
+      onLogin(studentSession);
+      navigate('/dashboard');
+    }
+  };
+
+  const handleOfficerLogin = (e) => {
     e.preventDefault();
     const role = authenticateUser(username, password);
     if (!role) {
-      setErrorMsg('Username atau password yang Anda masukkan salah.');
+      setErrorMsg('Username atau password pengurus yang Anda masukkan salah.');
       return;
     }
     setErrorMsg('');
@@ -39,7 +61,7 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 p-5 sm:p-6 rounded-3xl espresso-panel text-[#FAF5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          className="mb-10 p-5 sm:p-6 rounded-3xl espresso-panel text-[#FAF5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-[#E06D3B] text-white flex items-center justify-center shrink-0 shadow-md">
@@ -76,14 +98,14 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
         </motion.div>
       )}
 
-      {/* Hero Section + Login Card */}
+      {/* Hero Section (+ Register/Login Card HANYA jika belum login) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center mb-14">
-        {/* Left: Hero Intro */}
+        {/* Left: Hero Intro (Full width jika sudah login) */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          className="lg:col-span-7 space-y-5"
+          className={`${currentUser ? 'lg:col-span-12' : 'lg:col-span-7'} space-y-5`}
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-panel">
             <span className="w-2 h-2 rounded-full bg-[#8C6239] animate-pulse" />
@@ -100,7 +122,7 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
           </h1>
 
           {/* Teks Karangan Kelas yang Kompak + Teks Sesuai Foto */}
-          <div className="space-y-3.5 max-w-2xl">
+          <div className="space-y-3.5 max-w-3xl">
             <p className="text-base sm:text-lg text-[#6E5644] leading-relaxed">
               Di <span className="font-bold text-[#4A3322]">X-Jentreng 2026</span>, empat puluh
               kepala dengan cerita dan mimpi yang berbeda tumbuh menjadi satu keluarga yang utuh.
@@ -120,79 +142,142 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
           </div>
         </motion.div>
 
-        {/* Right: Login Box */}
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-          className="lg:col-span-5"
-        >
-          <form
-            onSubmit={handleFormSubmit}
-            className="glass-panel rounded-3xl p-6 sm:p-7 border border-[#DECBB3] shadow-xl space-y-4"
+        {/* Right: Register Murid / Login Pengurus — HANYA MUNCUL JIKA BELUM LOGIN (!currentUser) */}
+        {!currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
+            className="lg:col-span-5"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#8C6239] to-[#5C3D22] text-[#FFFDF9] flex items-center justify-center shadow-sm">
-                  <KeyRound className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="font-display font-bold text-lg text-[#2C1E14]">
-                    {currentUser ? 'Ganti Akun Role' : 'Login Portal Kelas'}
-                  </h2>
-                  <p className="text-xs text-[#7A624E]">
-                    Masukkan akun pengurus atau warga kelas X-J
-                  </p>
-                </div>
+            <div className="glass-panel rounded-3xl p-6 sm:p-7 border border-[#DECBB3] shadow-xl space-y-5">
+              {/* Mode Switcher Tabs */}
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#EFE5D8] border border-[#DECBB3]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('student');
+                    setErrorMsg('');
+                  }}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'student'
+                      ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
+                      : 'text-[#5C4028] hover:text-[#2C1E14]'
+                  }`}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Register Murid</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('officer');
+                    setErrorMsg('');
+                  }}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'officer'
+                      ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
+                      : 'text-[#5C4028] hover:text-[#2C1E14]'
+                  }`}
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Login Pengurus</span>
+                </button>
               </div>
+
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
+                  {errorMsg}
+                </div>
+              )}
+
+              {authMode === 'student' ? (
+                <form onSubmit={handleStudentRegister} className="space-y-4">
+                  <div>
+                    <h2 className="font-display font-bold text-lg text-[#2C1E14]">
+                      Register / Masuk Murid
+                    </h2>
+                    <p className="text-xs text-[#7A624E] mt-0.5">
+                      Cukup tulis nama Anda untuk membuka Denah Kelas, Notes Pribadi, & Kalender Pribadi.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#5C4028] mb-1.5">
+                      Nama Lengkap / Panggilan
+                    </label>
+                    <input
+                      type="text"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      required
+                      placeholder="Tulis nama Anda (mis. Madeline)..."
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>Masuk sebagai Murid</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleOfficerLogin} className="space-y-4">
+                  <div>
+                    <h2 className="font-display font-bold text-lg text-[#2C1E14]">
+                      Login Pengurus Kelas
+                    </h2>
+                    <p className="text-xs text-[#7A624E] mt-0.5">
+                      Khusus Ketua Kelas, Wakil, Bendahara, Sekretaris, dan Admin
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                      placeholder="Masukkan username pengurus..."
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="Masukkan password..."
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>Masuk Pengurus</span>
+                  </button>
+                </form>
+              )}
             </div>
-
-            {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
-                {errorMsg}
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-bold text-[#5C4028] mb-1">
-                Username
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Masukkan username..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-[#5C4028] mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Masukkan password..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Lock className="w-4 h-4" />
-              <span>Masuk ke Portal Kelas</span>
-            </button>
-          </form>
-        </motion.div>
+          </motion.div>
+        )}
       </div>
 
-      {/* Daftar 6 Role & Deskripsi Tugas (Tanpa Username/Password & Tanpa Masuk Cepat) */}
+      {/* Daftar 6 Role & Deskripsi Tugas */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
@@ -204,7 +289,7 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-[#7A624E]">
-            Setiap role memiliki wewenang spesifik dan seluruh akun dapat melihat Denah Kelas.
+            Setiap murid & pengurus memiliki akses ke Denah Kelas serta Notes & Kalender Pribadi.
           </p>
         </div>
 

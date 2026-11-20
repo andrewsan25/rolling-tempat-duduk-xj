@@ -36,6 +36,12 @@ const TAB_ITEMS = [
     title: 'Laporan Keuangan Kas',
     subtitle: 'Catatan pemasukan, pengeluaran & saldo kelas',
   },
+  {
+    id: 'personal',
+    label: 'Catatan Pribadi',
+    title: 'Notes & Kalender Pribadi',
+    subtitle: 'Catatan belajar & kalender agenda pribadi Anda',
+  },
 ];
 
 export default function Navbar({

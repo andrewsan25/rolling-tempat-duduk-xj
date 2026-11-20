@@ -12,11 +12,15 @@ import {
   Lock,
   ArrowRight,
   KeyRound,
+  UserPlus,
+  UserCheck,
+  NotebookPen,
 } from 'lucide-react';
 import DeskCard from '../components/DeskCard';
 import AnnouncementsTab from '../components/tabs/AnnouncementsTab';
 import PiketTab from '../components/tabs/PiketTab';
 import FinanceTab from '../components/tabs/FinanceTab';
+import PersonalNotesTab from '../components/tabs/PersonalNotesTab';
 import {
   createDefaultSeats,
   getDeskSeats,
@@ -25,7 +29,11 @@ import {
   rerollRandomSeats,
   SNAKE_LABELS,
 } from '../utils/seatingLogic';
-import { authenticateUser } from '../utils/authRoles';
+import {
+  authenticateUser,
+  registerStudentByName,
+  getUserStorageKey,
+} from '../utils/authRoles';
 
 const STORAGE_KEY = 'rolling_tempat_duduk_xj_seats';
 const PORTAL_STORAGE_KEY = 'rolling_tempat_duduk_xj_portal';
@@ -133,6 +141,8 @@ function getInitialPortalFallback() {
         amount: 110000,
       },
     ],
+    personalNotes: {},
+    registeredStudents: [],
   };
 }
 
@@ -190,6 +200,13 @@ function loadCachedPortal() {
         : fb.announcements,
       piket: Array.isArray(parsed.piket) ? parsed.piket : fb.piket,
       finance: Array.isArray(parsed.finance) ? parsed.finance : fb.finance,
+      personalNotes:
+        parsed.personalNotes && typeof parsed.personalNotes === 'object'
+          ? parsed.personalNotes
+          : {},
+      registeredStudents: Array.isArray(parsed.registeredStudents)
+        ? parsed.registeredStudents
+        : [],
     };
   } catch {
     return getInitialPortalFallback();
@@ -219,6 +236,9 @@ export default function Dashboard({
   const [searchQuery, setSearchQuery] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
 
+  // Gate state (Register Murid / Login Pengurus)
+  const [gateMode, setGateMode] = useState('student');
+  const [studentNameInput, setStudentNameInput] = useState('');
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -278,6 +298,14 @@ export default function Dashboard({
               finance: Array.isArray(portalJson.finance)
                 ? portalJson.finance
                 : portalData.finance,
+              personalNotes:
+                portalJson.personalNotes &&
+                typeof portalJson.personalNotes === 'object'
+                  ? portalJson.personalNotes
+                  : portalData.personalNotes || {},
+              registeredStudents: Array.isArray(portalJson.registeredStudents)
+                ? portalJson.registeredStudents
+                : portalData.registeredStudents || [],
             };
             setPortalData(mergedPortal);
             saveCachedPortal(mergedPortal);
@@ -401,13 +429,27 @@ export default function Dashboard({
     syncBatchToBackend(defaults, 'Reset Formasi Awal');
   };
 
-  // Login Gate (tanpa daftar username/password & tanpa masuk cepat)
+  // Gate jika belum login: Register Murid (Hanya Tulis Nama) atau Login Pengurus
   if (!currentUser) {
-    const handleGateLogin = (e) => {
+    const handleGateStudentRegister = (e) => {
+      e.preventDefault();
+      const clean = studentNameInput.trim();
+      if (!clean) {
+        setLoginError('Silakan tulis nama Anda terlebih dahulu.');
+        return;
+      }
+      setLoginError('');
+      const studentSession = registerStudentByName(clean);
+      if (studentSession) {
+        onLogin(studentSession);
+      }
+    };
+
+    const handleGateOfficerLogin = (e) => {
       e.preventDefault();
       const role = authenticateUser(loginUser, loginPass);
       if (!role) {
-        setLoginError('Username atau password yang Anda masukkan salah.');
+        setLoginError('Username atau password pengurus yang Anda masukkan salah.');
         return;
       }
       setLoginError('');
@@ -416,62 +458,123 @@ export default function Dashboard({
 
     return (
       <div className="max-w-md mx-auto px-4 py-14">
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-[#DECBB3] shadow-xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8C6239] to-[#5C3D22] text-[#FFFDF9] flex items-center justify-center shadow-md shrink-0">
-              <KeyRound className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#2C1E14]">
-                Login Portal Kelas
-              </h1>
-              <p className="text-xs text-[#7A624E]">
-                Silakan masuk dengan akun role Anda untuk mengakses dashboard.
-              </p>
-            </div>
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-[#DECBB3] shadow-xl space-y-5">
+          {/* Switcher Register Murid vs Login Pengurus */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-[#EFE5D8] border border-[#DECBB3]">
+            <button
+              type="button"
+              onClick={() => {
+                setGateMode('student');
+                setLoginError('');
+              }}
+              className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                gateMode === 'student'
+                  ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
+                  : 'text-[#5C4028] hover:text-[#2C1E14]'
+              }`}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Register Murid</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGateMode('officer');
+                setLoginError('');
+              }}
+              className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                gateMode === 'officer'
+                  ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
+                  : 'text-[#5C4028] hover:text-[#2C1E14]'
+              }`}
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Login Pengurus</span>
+            </button>
           </div>
 
           {loginError && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
               {loginError}
             </div>
           )}
 
-          <form onSubmit={handleGateLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-[#5C4028] mb-1">
-                Username
-              </label>
-              <input
-                type="text"
-                value={loginUser}
-                onChange={(e) => setLoginUser(e.target.value)}
-                placeholder="Masukkan username..."
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-[#5C4028] mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                value={loginPass}
-                onChange={(e) => setLoginPass(e.target.value)}
-                placeholder="Masukkan password..."
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 px-5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Lock className="w-4 h-4" />
-              <span>Masuk Sekarang</span>
-            </button>
-          </form>
+          {gateMode === 'student' ? (
+            <form onSubmit={handleGateStudentRegister} className="space-y-4">
+              <div>
+                <h1 className="font-display text-xl font-extrabold text-[#2C1E14]">
+                  Register / Masuk Murid
+                </h1>
+                <p className="text-xs text-[#7A624E] mt-0.5">
+                  Cukup tulis nama Anda untuk membuka Denah Kelas serta Notes & Kalender Pribadi.
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                  Nama Lengkap / Panggilan
+                </label>
+                <input
+                  type="text"
+                  value={studentNameInput}
+                  onChange={(e) => setStudentNameInput(e.target.value)}
+                  placeholder="Tulis nama Anda..."
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 px-5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Masuk ke Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleGateOfficerLogin} className="space-y-4">
+              <div>
+                <h1 className="font-display text-xl font-extrabold text-[#2C1E14]">
+                  Login Pengurus Kelas
+                </h1>
+                <p className="text-xs text-[#7A624E] mt-0.5">
+                  Masukkan username dan password pengurus kelas.
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={loginUser}
+                  onChange={(e) => setLoginUser(e.target.value)}
+                  placeholder="Masukkan username..."
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={loginPass}
+                  onChange={(e) => setLoginPass(e.target.value)}
+                  placeholder="Masukkan password..."
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 px-5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Masuk Sekarang</span>
+              </button>
+            </form>
+          )}
         </div>
       </div>
     );
@@ -481,6 +584,25 @@ export default function Dashboard({
   const canEditAnnouncements = Boolean(currentUser.permissions?.canEditAnnouncements);
   const canEditPiket = Boolean(currentUser.permissions?.canEditPiket);
   const canEditFinance = Boolean(currentUser.permissions?.canEditFinance);
+
+  const welcomeName = currentUser.customName || currentUser.roleName;
+  const userPersonalKey = getUserStorageKey(currentUser);
+  const currentUserPersonalNotes =
+    (portalData.personalNotes && portalData.personalNotes[userPersonalKey]) || [];
+
+  const handleSaveUserPersonalNotes = (nextNotesForUser) => {
+    const nextPersonalNotesMap = {
+      ...(portalData.personalNotes || {}),
+      [userPersonalKey]: nextNotesForUser,
+    };
+    syncPortalToBackend(
+      {
+        ...portalData,
+        personalNotes: nextPersonalNotesMap,
+      },
+      'Catatan & Kalender Pribadi berhasil disimpan!'
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -548,10 +670,40 @@ export default function Dashboard({
         )}
       </AnimatePresence>
 
+      {/* Welcome, [Nama] Header Banner di Dashboard */}
+      <div className="max-w-3xl mx-auto mb-6 p-5 sm:p-6 rounded-3xl glass-panel border border-[#DECBB3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center shrink-0 shadow-sm">
+            <UserCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-[#8C6239]">
+              Dashboard Portal Kelas &bull; {currentUser.roleName}
+            </div>
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#2C1E14]">
+              Welcome, {welcomeName}!
+            </h2>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('personal')}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+            activeTab === 'personal'
+              ? 'bg-[#1C140E] text-[#FAF5EE] shadow-md'
+              : 'bg-[#EFE5D8] hover:bg-[#E2D2BE] text-[#4A3322] border border-[#DECBB3]'
+          }`}
+        >
+          <NotebookPen className="w-4 h-4 text-[#E06D3B]" />
+          <span>Catatan & Kalender Pribadi ({currentUserPersonalNotes.length})</span>
+        </button>
+      </div>
+
       {/* ================= TAB 1: DENAH TEMPAT DUDUK ================= */}
       {activeTab === 'seats' && currentUser.allowedTabs.includes('seats') && (
         <div>
-          {/* 2-Column Espresso Command Panel directly below Pill Navbar (Persis gaya kartu 2 kolom pada gambar referensi) */}
+          {/* 2-Column Espresso Command Panel directly below Pill Navbar */}
           <div className="max-w-3xl mx-auto espresso-panel rounded-3xl p-6 sm:p-8 mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-white/10">
               <div>
@@ -574,7 +726,7 @@ export default function Dashboard({
                 <p className="text-xs sm:text-sm text-[#B09E8E] mt-1">
                   {canEditSeats
                     ? 'Pilih aksi kontrol di bawah atau klik nama siswa pada meja untuk mengedit.'
-                    : 'Mode Lihat (Murid Biasa): Gunakan pencarian untuk menemukan kursi Anda.'}
+                    : 'Mode Lihat: Gunakan pencarian untuk menemukan kursi Anda atau buka tab Catatan Pribadi.'}
                 </p>
               </div>
 
@@ -599,7 +751,7 @@ export default function Dashboard({
               </div>
             </div>
 
-            {/* 2-Column Action Grid inside the Panel (Persis seperti AI agency / Web design agency di gambar referensi) */}
+            {/* 2-Column Action Grid inside the Panel */}
             {canEditSeats ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
                 <button
@@ -673,14 +825,19 @@ export default function Dashboard({
                     Urutan tempat duduk diatur oleh Ketua Kelas & Wakil
                   </div>
                 </div>
-                <div>
-                  <div className="font-display font-bold text-sm text-[#FAF5EE]">
-                    Pola Snake Pattern (5 Baris &times; 4 Kolom)
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('personal')}
+                  className="text-left group cursor-pointer"
+                >
+                  <div className="font-display font-bold text-sm text-[#FAF5EE] group-hover:text-[#E06D3B] transition-colors flex items-center gap-1.5">
+                    <span>Buka Notes & Kalender Pribadi</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#E06D3B]" />
                   </div>
                   <div className="text-xs text-[#B09E8E] mt-0.5">
-                    40 kursi terbagi dalam 20 meja ganda (Kiri & Kanan)
+                    Tulis catatan belajar dan jadwal agenda pribadi Anda
                   </div>
-                </div>
+                </button>
               </div>
             )}
           </div>
@@ -819,6 +976,16 @@ export default function Dashboard({
               'Laporan Keuangan Kas berhasil diperbarui!'
             )
           }
+        />
+      )}
+
+      {/* ================= TAB 5: CATATAN & KALENDER PRIBADI ================= */}
+      {activeTab === 'personal' && currentUser.allowedTabs.includes('personal') && (
+        <PersonalNotesTab
+          currentUser={currentUser}
+          personalNotes={currentUserPersonalNotes}
+          classAnnouncements={portalData.announcements}
+          onSavePersonalNotes={handleSaveUserPersonalNotes}
         />
       )}
     </div>
