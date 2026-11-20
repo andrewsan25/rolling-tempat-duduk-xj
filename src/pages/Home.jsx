@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -15,7 +15,12 @@ import {
   ROLES_CONFIG,
   authenticateUser,
   registerStudentByName,
+  saveRolePasswordsMap,
 } from '../utils/authRoles';
+
+const PORTAL_API_URL = import.meta.env.DEV
+  ? 'http://localhost:5000/api/portal'
+  : '/api/portal';
 
 export default function Home({ currentUser, onLogin, onOpenSettings }) {
   const navigate = useNavigate();
@@ -24,6 +29,22 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Sinkronkan perubahan password dari Admin (Supabase) agar login selalu menggunakan password terbaru
+  useEffect(() => {
+    let mounted = true;
+    fetch(PORTAL_API_URL)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (mounted && data?.rolePasswords) {
+          saveRolePasswordsMap(data.rolePasswords);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleStudentRegister = (e) => {
     e.preventDefault();

@@ -21,6 +21,7 @@ import AnnouncementsTab from '../components/tabs/AnnouncementsTab';
 import PiketTab from '../components/tabs/PiketTab';
 import FinanceTab from '../components/tabs/FinanceTab';
 import PersonalNotesTab from '../components/tabs/PersonalNotesTab';
+import AdminAccountsTab from '../components/tabs/AdminAccountsTab';
 import {
   createDefaultSeats,
   getDeskSeats,
@@ -33,6 +34,8 @@ import {
   authenticateUser,
   registerStudentByName,
   getUserStorageKey,
+  saveRolePasswordsMap,
+  getSavedRolePasswords,
 } from '../utils/authRoles';
 
 const STORAGE_KEY = 'rolling_tempat_duduk_xj_seats';
@@ -207,6 +210,10 @@ function loadCachedPortal() {
       registeredStudents: Array.isArray(parsed.registeredStudents)
         ? parsed.registeredStudents
         : [],
+      rolePasswords:
+        parsed.rolePasswords && typeof parsed.rolePasswords === 'object'
+          ? parsed.rolePasswords
+          : getSavedRolePasswords(),
     };
   } catch {
     return getInitialPortalFallback();
@@ -306,7 +313,13 @@ export default function Dashboard({
               registeredStudents: Array.isArray(portalJson.registeredStudents)
                 ? portalJson.registeredStudents
                 : portalData.registeredStudents || [],
+              rolePasswords:
+                portalJson.rolePasswords &&
+                typeof portalJson.rolePasswords === 'object'
+                  ? portalJson.rolePasswords
+                  : portalData.rolePasswords || {},
             };
+            saveRolePasswordsMap(mergedPortal.rolePasswords);
             setPortalData(mergedPortal);
             saveCachedPortal(mergedPortal);
           }
@@ -986,6 +999,23 @@ export default function Dashboard({
           personalNotes={currentUserPersonalNotes}
           classAnnouncements={portalData.announcements}
           onSavePersonalNotes={handleSaveUserPersonalNotes}
+        />
+      )}
+
+      {/* ================= TAB 6: KELOLA AKUN & PASSWORD (KHUSUS ADMIN) ================= */}
+      {activeTab === 'accounts' && currentUser.allowedTabs.includes('accounts') && (
+        <AdminAccountsTab
+          rolePasswords={portalData.rolePasswords || {}}
+          onSaveRolePasswords={(nextPasswordsMap, msg) => {
+            saveRolePasswordsMap(nextPasswordsMap);
+            syncPortalToBackend(
+              {
+                ...portalData,
+                rolePasswords: nextPasswordsMap,
+              },
+              msg
+            );
+          }}
         />
       )}
     </div>

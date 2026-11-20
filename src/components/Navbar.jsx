@@ -42,6 +42,12 @@ const TAB_ITEMS = [
     title: 'Notes & Kalender Pribadi',
     subtitle: 'Catatan belajar & kalender agenda pribadi Anda',
   },
+  {
+    id: 'accounts',
+    label: 'Kelola Akun',
+    title: 'Manajemen Akun & Password',
+    subtitle: 'Akses & reset password seluruh akun role (Khusus Admin)',
+  },
 ];
 
 export default function Navbar({

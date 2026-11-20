@@ -4,6 +4,7 @@ export const ROLES_CONFIG = [
     roleName: 'Ketua Kelas',
     username: 'ketua',
     password: 'ketuaXJ2026',
+    defaultPassword: 'ketuaXJ2026',
     badgeColor: 'bg-[#8C6239] text-[#FFFDF9]',
     shortDesc: 'Mengatur denah kursi (geser & reroll), jadwal piket, memantau pengumuman, kas, serta catatan pribadi.',
     capabilities: [
@@ -18,6 +19,7 @@ export const ROLES_CONFIG = [
       canEditAnnouncements: false,
       canEditPiket: true,
       canEditFinance: false,
+      canManageAccounts: false,
     },
   },
   {
@@ -25,6 +27,7 @@ export const ROLES_CONFIG = [
     roleName: 'Wakil Ketua Kelas',
     username: 'wakil',
     password: 'wakilXJ2026',
+    defaultPassword: 'wakilXJ2026',
     badgeColor: 'bg-[#9C7148] text-[#FFFDF9]',
     shortDesc: 'Mendampingi Ketua Kelas mengatur denah kursi (geser & reroll), jadwal piket, memantau kas, serta catatan pribadi.',
     capabilities: [
@@ -39,6 +42,7 @@ export const ROLES_CONFIG = [
       canEditAnnouncements: false,
       canEditPiket: true,
       canEditFinance: false,
+      canManageAccounts: false,
     },
   },
   {
@@ -46,6 +50,7 @@ export const ROLES_CONFIG = [
     roleName: 'Bendahara',
     username: 'bendahara',
     password: 'bendaharaXJ2026',
+    defaultPassword: 'bendaharaXJ2026',
     badgeColor: 'bg-[#7A5C43] text-[#FFFDF9]',
     shortDesc: 'Mengelola pemasukan, pengeluaran, dan laporan keuangan kas kelas, melihat denah kelas, serta catatan pribadi.',
     capabilities: [
@@ -59,6 +64,7 @@ export const ROLES_CONFIG = [
       canEditAnnouncements: false,
       canEditPiket: false,
       canEditFinance: true,
+      canManageAccounts: false,
     },
   },
   {
@@ -66,6 +72,7 @@ export const ROLES_CONFIG = [
     roleName: 'Sekretaris',
     username: 'sekretaris',
     password: 'sekretarisXJ2026',
+    defaultPassword: 'sekretarisXJ2026',
     badgeColor: 'bg-[#A67B5B] text-[#FFFDF9]',
     shortDesc: 'Mengelola papan pengumuman, catatan tugas, jadwal ulangan (sync kalender), jadwal piket, serta catatan pribadi.',
     capabilities: [
@@ -80,6 +87,7 @@ export const ROLES_CONFIG = [
       canEditAnnouncements: true,
       canEditPiket: true,
       canEditFinance: false,
+      canManageAccounts: false,
     },
   },
   {
@@ -87,6 +95,7 @@ export const ROLES_CONFIG = [
     roleName: 'Murid',
     username: 'murid',
     password: 'muridXJ2026',
+    defaultPassword: 'muridXJ2026',
     badgeColor: 'bg-[#C4A484] text-[#2C1E14]',
     shortDesc: 'Cukup register dengan Nama untuk melihat denah kursi, pengumuman kelas, serta mengelola Notes & Kalender Pribadi.',
     capabilities: [
@@ -101,6 +110,7 @@ export const ROLES_CONFIG = [
       canEditAnnouncements: false,
       canEditPiket: false,
       canEditFinance: false,
+      canManageAccounts: false,
     },
   },
   {
@@ -108,26 +118,59 @@ export const ROLES_CONFIG = [
     roleName: 'Admin Utama',
     username: 'admin',
     password: 'adminXJ2026',
+    defaultPassword: 'adminXJ2026',
     badgeColor: 'bg-[#4A3322] text-[#FFFDF9]',
-    shortDesc: 'Akses penuh (Full Control) ke seluruh fitur denah tempat duduk, pengumuman, kalender, piket, keuangan, dan catatan pribadi.',
+    shortDesc: 'Akses penuh (Full Control) ke seluruh fitur kelas, termasuk melihat & mereset password seluruh akun role lain.',
     capabilities: [
       'Akses penuh melihat & mengedit Denah Tempat Duduk (Rotasi, Reroll, Edit Nama, Reset)',
-      'Akses penuh menambah & mengubah Papan Pengumuman, Tugas, Ulangan & Kalender Kelas',
-      'Akses penuh mengubah Jadwal Piket kelas & Laporan Keuangan kas kelas',
+      'Akses penuh menambah & mengubah Papan Pengumuman, Tugas, Ulangan, Piket & Keuangan',
+      'Melihat password akun role lain serta mengubah / mereset password akun di tab Kelola Akun',
       'Mengakses Catatan Pribadi (Notes) & Kalender Pribadi',
     ],
-    allowedTabs: ['seats', 'announcements', 'piket', 'finance', 'personal'],
+    allowedTabs: ['seats', 'announcements', 'piket', 'finance', 'personal', 'accounts'],
     permissions: {
       canEditSeats: true,
       canEditAnnouncements: true,
       canEditPiket: true,
       canEditFinance: true,
+      canManageAccounts: true,
     },
   },
 ];
 
 const AUTH_STORAGE_KEY = 'xj_portal_logged_user';
 const USER_NAMES_STORAGE_KEY = 'xj_portal_custom_names';
+const ROLE_PASSWORDS_STORAGE_KEY = 'xj_portal_role_passwords';
+
+export function getSavedRolePasswords() {
+  try {
+    const raw = localStorage.getItem(ROLE_PASSWORDS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveRolePasswordsMap(passwordsMap) {
+  try {
+    const cleanMap =
+      passwordsMap && typeof passwordsMap === 'object' ? passwordsMap : {};
+    localStorage.setItem(ROLE_PASSWORDS_STORAGE_KEY, JSON.stringify(cleanMap));
+    return cleanMap;
+  } catch {
+    return {};
+  }
+}
+
+export function getEffectiveRolePassword(roleId, overrideMap) {
+  const role = ROLES_CONFIG.find((r) => r.id === roleId);
+  if (!role) return '';
+  const map = overrideMap || getSavedRolePasswords();
+  const customPass = map[roleId];
+  return typeof customPass === 'string' && customPass.trim()
+    ? customPass.trim()
+    : role.defaultPassword;
+}
 
 export function getSavedCustomNames() {
   try {
@@ -201,9 +244,10 @@ export function authenticateUser(username, password) {
   const cleanUser = (username || '').trim().toLowerCase();
   const cleanPass = (password || '').trim();
 
-  const found = ROLES_CONFIG.find(
-    (r) => r.username.toLowerCase() === cleanUser && r.password === cleanPass
-  );
+  const found = ROLES_CONFIG.find((r) => {
+    const activePass = getEffectiveRolePassword(r.id);
+    return r.username.toLowerCase() === cleanUser && activePass === cleanPass;
+  });
   return found ? attachCustomName(found) : null;
 }
 

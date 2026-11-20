@@ -110,6 +110,7 @@ export function getDefaultPortalData() {
     ],
     personalNotes: {},
     registeredStudents: [],
+    rolePasswords: {},
   };
 }
 
@@ -148,6 +149,10 @@ export async function getPortalData() {
       registeredStudents: Array.isArray(parsed.registeredStudents)
         ? parsed.registeredStudents
         : [],
+      rolePasswords:
+        parsed.rolePasswords && typeof parsed.rolePasswords === 'object'
+          ? parsed.rolePasswords
+          : {},
     };
   } catch {
     return defaults;
@@ -174,6 +179,11 @@ export async function savePortalData(portalPayload) {
     registeredStudents: Array.isArray(portalPayload?.registeredStudents)
       ? portalPayload.registeredStudents
       : [],
+    rolePasswords:
+      portalPayload?.rolePasswords &&
+      typeof portalPayload.rolePasswords === 'object'
+        ? portalPayload.rolePasswords
+        : {},
   };
 
   const supabase = getSupabaseClient();
