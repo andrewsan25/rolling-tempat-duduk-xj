@@ -6,6 +6,7 @@ import {
   updateSingleSeat,
   batchUpdateSeats,
 } from './seatsService.js';
+import { getPortalData, savePortalData } from './portalService.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,7 +32,7 @@ app.get('/api/seats', async (_req, res) => {
   }
 });
 
-// PUT /api/seats/batch — Update massal saat rotasi / reset
+// PUT /api/seats/batch — Update massal saat rotasi / reroll / reset
 app.put('/api/seats/batch', async (req, res) => {
   try {
     const payload = Array.isArray(req.body) ? req.body : req.body?.seats;
@@ -56,6 +57,32 @@ app.patch('/api/seats/:id', async (req, res) => {
     console.error('PATCH /api/seats/:id error:', error);
     res.status(error.statusCode || 500).json({
       error: error.message || 'Gagal memperbarui nama siswa di Supabase.',
+    });
+  }
+});
+
+// GET /api/portal — Ambil data Papan Pengumuman, Kalender, Piket & Keuangan
+app.get('/api/portal', async (_req, res) => {
+  try {
+    const data = await getPortalData();
+    res.json(data);
+  } catch (error) {
+    console.error('GET /api/portal error:', error);
+    res.status(500).json({
+      error: error.message || 'Gagal mengambil data portal kelas dari Supabase.',
+    });
+  }
+});
+
+// PUT /api/portal — Simpan perubahan Papan Pengumuman, Piket & Keuangan
+app.put('/api/portal', async (req, res) => {
+  try {
+    const saved = await savePortalData(req.body);
+    res.json({ message: 'Data portal kelas berhasil disimpan.', data: saved });
+  } catch (error) {
+    console.error('PUT /api/portal error:', error);
+    res.status(500).json({
+      error: error.message || 'Gagal menyimpan data portal kelas ke Supabase.',
     });
   }
 });

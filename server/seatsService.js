@@ -13,6 +13,8 @@ export async function getAllSeats() {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select('*')
+    .gte('snake_index', 0)
+    .lte('snake_index', 39)
     .order('snake_index', { ascending: true });
 
   if (error) {

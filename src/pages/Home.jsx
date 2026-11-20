@@ -1,208 +1,262 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
-  RefreshCw,
-  Calendar,
+  KeyRound,
+  ShieldCheck,
+  CheckCircle2,
+  UserCheck,
+  Lock,
   Sparkles,
-  Database,
-  Users,
-  Layers,
-  Zap,
 } from 'lucide-react';
+import { ROLES_CONFIG, authenticateUser } from '../utils/authRoles';
 
-const MINI_PREVIEW_ROWS = [
-  { row: 1, dir: 'ltr', pairs: [['A', 'B'], ['C', 'D'], ['E', 'F'], ['G', 'H']] },
-  { row: 2, dir: 'rtl', pairs: [['P', 'O'], ['N', 'M'], ['L', 'K'], ['J', 'I']] },
-  { row: 3, dir: 'ltr', pairs: [['Q', 'R'], ['S', 'T'], ['U', 'V'], ['W', 'X']] },
-];
-
-export default function Home() {
+export default function Home({ currentUser, onLogin }) {
   const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const role = authenticateUser(username, password);
+    if (!role) {
+      setErrorMsg('Username atau password tidak sesuai. Silakan cek daftar akun di bawah.');
+      return;
+    }
+    setErrorMsg('');
+    onLogin(role);
+    navigate('/dashboard');
+  };
+
+  const handleQuickLogin = (role) => {
+    onLogin(role);
+    navigate('/dashboard');
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-      {/* Hero Split Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center mb-16">
-        {/* Left Column: Copy + CTA */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+      {/* Hero Section + Login Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center mb-14">
+        {/* Left: Hero Intro */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="lg:col-span-6 text-left"
+          transition={{ duration: 0.45 }}
+          className="lg:col-span-7 space-y-5"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-panel mb-6">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-slate-700">
-              Terhubung Live dengan Supabase Cloud
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-panel">
+            <span className="w-2 h-2 rounded-full bg-[#8C6239] animate-pulse" />
+            <span className="text-xs font-bold text-[#5C3D22]">
+              Portal Kelas X-Jentreng 2026 &bull; Role-Based Access Control
             </span>
           </div>
 
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-5">
-            Atur Denah Kelas{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 bg-clip-text text-transparent">
-              Lebih Cerdas & Adil.
+          <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight text-[#2C1E14] leading-[1.12]">
+            X-Jentreng{' '}
+            <span className="bg-gradient-to-r from-[#8C6239] via-[#A67B5B] to-[#6F4E37] bg-clip-text text-transparent">
+              2026
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 mb-8 leading-relaxed max-w-xl">
-            Sistem rolling tempat duduk modern untuk{' '}
-            <span className="font-semibold text-slate-800">40 siswa (20 meja ganda)</span>.
-            Dilengkapi pola <span className="font-semibold text-blue-600">Snake Pattern</span>,{' '}
-            <span className="font-semibold text-indigo-600">Rotasi 5 Harian</span>, dan sinkronisasi
-            real-time otomatis.
+          <p className="text-base sm:text-lg text-[#6E5644] leading-relaxed max-w-2xl">
+            Setiap pengurus dan warga kelas memiliki hak akses khusus sesuai jabatannya:
+            mulai dari <span className="font-bold text-[#4A3322]">Denah Kursi (Geser & Reroll)</span>,{' '}
+            <span className="font-bold text-[#4A3322]">Papan Pengumuman & Kalender Ter-Sync</span>,{' '}
+            <span className="font-bold text-[#4A3322]">Jadwal Piket</span>, hingga{' '}
+            <span className="font-bold text-[#4A3322]">Laporan Keuangan Kas</span>.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3.5 mb-8">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-semibold text-sm shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/30 transition-all cursor-pointer"
-            >
-              <span>Buka Denah Kelas</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/75 border border-slate-200/80 text-xs font-semibold text-slate-600">
-              <Users className="w-4 h-4 text-blue-500" />
-              <span>5 Baris × 4 Kolom</span>
-            </div>
-          </div>
-
-          {/* Mini Stats Strip */}
-          <div className="grid grid-cols-3 gap-3 max-w-md">
-            <div className="p-3.5 rounded-2xl glass-panel">
-              <div className="font-display text-xl font-extrabold text-slate-900">40</div>
-              <div className="text-[11px] font-medium text-slate-500">Total Kursi</div>
-            </div>
-            <div className="p-3.5 rounded-2xl glass-panel">
-              <div className="font-display text-xl font-extrabold text-blue-600">2 Mode</div>
-              <div className="text-[11px] font-medium text-slate-500">Auto Rotasi</div>
-            </div>
-            <div className="p-3.5 rounded-2xl glass-panel">
-              <div className="font-display text-xl font-extrabold text-emerald-600">Live</div>
-              <div className="text-[11px] font-medium text-slate-500">Supabase DB</div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Right Column: Interactive Visual Preview Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.55, delay: 0.08, ease: 'easeOut' }}
-          className="lg:col-span-6"
-        >
-          <div className="relative p-5 sm:p-6 rounded-3xl glass-panel border border-white shadow-xl">
-            {/* Decorative Top Bar */}
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-400" />
-                <span className="w-3 h-3 rounded-full bg-amber-400" />
-                <span className="w-3 h-3 rounded-full bg-emerald-400" />
-              </div>
-              <span className="px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider">
-                Preview Pola Snake Pattern
-              </span>
-            </div>
-
-            {/* Mini Whiteboard */}
-            <div className="w-3/4 mx-auto mb-5 py-1.5 rounded-xl bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 text-center text-[10px] font-bold uppercase tracking-widest text-sky-300 shadow-sm">
-              Papan Tulis / Depan Kelas
-            </div>
-
-            {/* Mini Classroom Grid */}
-            <div className="space-y-2.5">
-              {MINI_PREVIEW_ROWS.map((r) => (
-                <div key={r.row} className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-semibold text-slate-400 px-1">
-                    <span>Baris {r.row}</span>
-                    <span className={r.dir === 'ltr' ? 'text-blue-500' : 'text-amber-500'}>
-                      {r.dir === 'ltr' ? 'Kiri → Kanan' : 'Kanan → Kiri'}
-                    </span>
+          {currentUser && (
+            <div className="p-4 rounded-2xl glass-panel flex flex-wrap items-center justify-between gap-3 border-2 border-[#C8AA88]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-[#7A624E]">
+                    Sedang login sebagai:
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {r.pairs.map(([left, right]) => (
-                      <div
-                        key={left + right}
-                        className="p-1.5 rounded-xl bg-white border border-slate-200/80 shadow-xs grid grid-cols-2 gap-1"
-                      >
-                        <div className="py-1.5 rounded-lg bg-slate-100 text-center text-[11px] font-bold text-slate-700">
-                          {left}
-                        </div>
-                        <div className="py-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-center text-[11px] font-bold text-white shadow-xs">
-                          {right}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="font-display font-bold text-base text-[#2C1E14]">
+                    {currentUser.roleName} (<code className="text-xs">{currentUser.username}</code>)
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Bottom Caption */}
-            <div className="mt-5 pt-4 border-t border-slate-200/70 flex items-center justify-between text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-                Biru = Kursi Kanan (Rotasi 5 Hari)
-              </span>
+              </div>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="font-semibold text-blue-600 hover:text-blue-700 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] text-[#FFFDF9] text-sm font-semibold shadow-md cursor-pointer"
               >
-                Coba Sekarang →
+                <span>Buka Dashboard Anda</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-          </div>
+          )}
+        </motion.div>
+
+        {/* Right: Login Box */}
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+          className="lg:col-span-5"
+        >
+          <form
+            onSubmit={handleFormSubmit}
+            className="glass-panel rounded-3xl p-6 sm:p-7 border border-[#DECBB3] shadow-xl space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#8C6239] to-[#5C3D22] text-[#FFFDF9] flex items-center justify-center shadow-sm">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="font-display font-bold text-lg text-[#2C1E14]">
+                    Login Portal Kelas
+                  </h2>
+                  <p className="text-xs text-[#7A624E]">
+                    Masuk sesuai role untuk membuka tab akses Anda
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
+                {errorMsg}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="ketua / wakil / bendahara / sekretaris / murid / admin"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Masukkan password role..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] hover:from-[#7A5230] hover:to-[#5C3D22] text-[#FFFDF9] font-semibold text-sm shadow-md shadow-[#8C6239]/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Masuk ke Portal Kelas</span>
+            </button>
+
+            <div className="pt-2 border-t border-[#E6D7C3] text-[11px] text-[#7A624E] text-center">
+              Atau klik tombol <strong>&ldquo;Masuk Cepat&rdquo;</strong> pada salah satu kartu Role di bawah ini:
+            </div>
+          </form>
         </motion.div>
       </div>
 
-      {/* Bento Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <motion.div
-          whileHover={{ y: -4 }}
-          className="p-6 rounded-3xl glass-panel transition-all"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 mb-4">
-            <RefreshCw className="w-5 h-5" />
+      {/* Daftar 6 Role, Deskripsi Tugas & Akun (User + Password) */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-[#8C6239]">
+              Pembagian Hak Akses & Akun
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#2C1E14]">
+              Deskripsi Role & Kredensial Login
+            </h2>
           </div>
-          <h3 className="font-display font-bold text-base text-slate-900 mb-2">
-            Rotasi Biasa (Snake Pattern)
-          </h3>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Menggeser seluruh 40 siswa maju 1 langkah mengikuti alur ular dari kursi A hingga nn secara mulus dan merata.
+          <p className="text-xs sm:text-sm text-[#7A624E]">
+            Setiap role hanya dapat membuka tab yang diizinkan sesuai wewenangnya.
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          whileHover={{ y: -4 }}
-          className="p-6 rounded-3xl glass-panel transition-all"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 text-sky-400 flex items-center justify-center shadow-md shadow-slate-900/20 mb-4">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <h3 className="font-display font-bold text-base text-slate-900 mb-2">
-            Rotasi 5 Hari (Kursi Kanan)
-          </h3>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Khusus siswa di kursi kanan maju 1 baris ke depan di kolom yang sama (HH → ee → R → O → B → HH) agar teman sebangku terus berganti.
-          </p>
-        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {ROLES_CONFIG.map((role) => (
+            <motion.div
+              key={role.id}
+              whileHover={{ y: -3 }}
+              className="glass-panel rounded-3xl p-6 flex flex-col justify-between border border-[#DECBB3]"
+            >
+              <div>
+                {/* Role Header */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold shadow-xs ${role.badgeColor}`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{role.roleName}</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-[#8C735E]">
+                    {role.allowedTabs.length} Tab Aktif
+                  </span>
+                </div>
 
-        <motion.div
-          whileHover={{ y: -4 }}
-          className="p-6 rounded-3xl glass-panel transition-all"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 mb-4">
-            <Database className="w-5 h-5" />
-          </div>
-          <h3 className="font-display font-bold text-base text-slate-900 mb-2">
-            Inline Edit & Supabase Sync
-          </h3>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Klik langsung pada nama siswa untuk mengedit, cari posisi siswa secara instan, dan simpan otomatis ke database Supabase.
-          </p>
-        </motion.div>
+                <p className="text-xs sm:text-sm text-[#5C4028] font-medium mb-4 leading-relaxed">
+                  {role.shortDesc}
+                </p>
+
+                {/* Capabilities List */}
+                <div className="space-y-2 mb-5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#8C6239]">
+                    Yang Bisa Dilakukan:
+                  </div>
+                  {role.capabilities.map((cap, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2 text-xs text-[#4A3322] leading-snug"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#8C6239] shrink-0 mt-0.5" />
+                      <span>{cap}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Credentials Box + Quick Login Button */}
+              <div className="pt-4 border-t border-[#E6D7C3] space-y-3">
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-[#FAF5EE] border border-[#E2D2BE] text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-[#8C735E] block">
+                      Username
+                    </span>
+                    <code className="font-bold text-[#2C1E14]">{role.username}</code>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-[#8C735E] block">
+                      Password
+                    </span>
+                    <code className="font-bold text-[#8C6239]">{role.password}</code>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin(role)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#EFE5D8] hover:bg-[#8C6239] text-[#4A3322] hover:text-[#FFFDF9] font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Masuk Cepat sebagai {role.roleName}</span>
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
