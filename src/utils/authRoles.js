@@ -47,13 +47,12 @@ export const ROLES_CONFIG = [
     username: 'bendahara',
     password: 'bendaharaXJ2026',
     badgeColor: 'bg-[#7A5C43] text-[#FFFDF9]',
-    shortDesc: 'Fokus penuh mengelola pemasukan, pengeluaran, dan laporan keuangan kas kelas.',
+    shortDesc: 'Mengelola pemasukan, pengeluaran, dan laporan keuangan kas kelas, serta dapat melihat denah kelas.',
     capabilities: [
-      'Hanya dapat membuka tab Laporan Keuangan',
-      'Menambah catatan Pemasukan & Pengeluaran kas kelas',
-      'Mengedit dan menghapus riwayat transaksi keuangan kelas',
+      'Mengelola & mengedit penuh Laporan Keuangan (Tambah Pemasukan/Pengeluaran & Hapus Transaksi)',
+      'Melihat Denah Tempat Duduk Kelas, Papan Pengumuman, & Jadwal Piket (Read-Only)',
     ],
-    allowedTabs: ['finance'],
+    allowedTabs: ['finance', 'seats', 'announcements', 'piket'],
     permissions: {
       canEditSeats: false,
       canEditAnnouncements: false,
@@ -67,14 +66,14 @@ export const ROLES_CONFIG = [
     username: 'sekretaris',
     password: 'sekretarisXJ2026',
     badgeColor: 'bg-[#A67B5B] text-[#FFFDF9]',
-    shortDesc: 'Mengelola papan pengumuman, catatan tugas, jadwal ulangan (otomatis sync ke kalender), dan jadwal piket.',
+    shortDesc: 'Mengelola papan pengumuman, catatan tugas, jadwal ulangan (otomatis sync ke kalender), jadwal piket, serta melihat denah kelas.',
     capabilities: [
-      'Hanya dapat membuka tab Papan Pengumuman (& Jadwal Piket)',
       'Menulis, mengedit, dan menghapus Catatan Kelas, Tugas, & Jadwal Ulangan',
       'Otomatis menyinkronkan tanggal catatan tugas/ulangan ke Kalender Kelas',
       'Mengelola daftar Jadwal Piket harian',
+      'Melihat Denah Tempat Duduk Kelas (Read-Only)',
     ],
-    allowedTabs: ['announcements', 'piket'],
+    allowedTabs: ['announcements', 'piket', 'seats'],
     permissions: {
       canEditSeats: false,
       canEditAnnouncements: true,
@@ -126,6 +125,41 @@ export const ROLES_CONFIG = [
 ];
 
 const AUTH_STORAGE_KEY = 'xj_portal_logged_user';
+const USER_NAMES_STORAGE_KEY = 'xj_portal_custom_names';
+
+export function getSavedCustomNames() {
+  try {
+    const raw = localStorage.getItem(USER_NAMES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveCustomNameForRole(roleId, customName) {
+  try {
+    const map = getSavedCustomNames();
+    const trimmed = (customName || '').trim();
+    if (trimmed) {
+      map[roleId] = trimmed;
+    } else {
+      delete map[roleId];
+    }
+    localStorage.setItem(USER_NAMES_STORAGE_KEY, JSON.stringify(map));
+    return trimmed;
+  } catch {
+    return '';
+  }
+}
+
+export function attachCustomName(roleObj) {
+  if (!roleObj) return null;
+  const namesMap = getSavedCustomNames();
+  return {
+    ...roleObj,
+    customName: namesMap[roleObj.id] || '',
+  };
+}
 
 export function authenticateUser(username, password) {
   const cleanUser = (username || '').trim().toLowerCase();
@@ -134,7 +168,7 @@ export function authenticateUser(username, password) {
   const found = ROLES_CONFIG.find(
     (r) => r.username.toLowerCase() === cleanUser && r.password === cleanPass
   );
-  return found || null;
+  return found ? attachCustomName(found) : null;
 }
 
 export function getSavedUser() {
@@ -142,7 +176,8 @@ export function getSavedUser() {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return ROLES_CONFIG.find((r) => r.id === parsed.id) || null;
+    const found = ROLES_CONFIG.find((r) => r.id === parsed.id);
+    return found ? attachCustomName(found) : null;
   } catch {
     return null;
   }

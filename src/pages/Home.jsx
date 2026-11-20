@@ -8,10 +8,11 @@ import {
   CheckCircle2,
   UserCheck,
   Lock,
+  Settings,
 } from 'lucide-react';
 import { ROLES_CONFIG, authenticateUser } from '../utils/authRoles';
 
-export default function Home({ currentUser, onLogin }) {
+export default function Home({ currentUser, onLogin, onOpenSettings }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -29,8 +30,52 @@ export default function Home({ currentUser, onLogin }) {
     navigate('/dashboard');
   };
 
+  const welcomeName = currentUser?.customName || currentUser?.roleName || '';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+      {/* Welcome Banner jika sudah login */}
+      {currentUser && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-5 sm:p-6 rounded-3xl espresso-panel text-[#FAF5EE] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-[#E06D3B] text-white flex items-center justify-center shrink-0 shadow-md">
+              <UserCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-[#E06D3B]">
+                Status Login Aktif &bull; {currentUser.roleName}
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-[#FAF5EE]">
+                Welcome, {welcomeName}!
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-[#FAF5EE] text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <Settings className="w-4 h-4 text-[#E06D3B]" />
+              <span>{currentUser.customName ? 'Ubah Nama' : 'Isi Nama di Settings'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FAF5EE] hover:bg-[#EFE5D8] text-[#1C140E] text-xs sm:text-sm font-semibold shadow-md transition-all cursor-pointer"
+            >
+              <span>Buka Dashboard</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Hero Section + Login Card */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center mb-14">
         {/* Left: Hero Intro */}
@@ -73,31 +118,6 @@ export default function Home({ currentUser, onLogin }) {
               <span className="font-bold text-[#4A3322]">Laporan Keuangan Kas</span>.
             </p>
           </div>
-
-          {currentUser && (
-            <div className="p-4 rounded-2xl glass-panel flex flex-wrap items-center justify-between gap-3 border-2 border-[#C8AA88]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center">
-                  <UserCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-[#7A624E]">
-                    Sedang login sebagai:
-                  </div>
-                  <div className="font-display font-bold text-base text-[#2C1E14]">
-                    {currentUser.roleName}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] text-sm font-semibold shadow-md cursor-pointer"
-              >
-                <span>Buka Dashboard Anda</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
         </motion.div>
 
         {/* Right: Login Box */}
@@ -118,7 +138,7 @@ export default function Home({ currentUser, onLogin }) {
                 </div>
                 <div>
                   <h2 className="font-display font-bold text-lg text-[#2C1E14]">
-                    Login Portal Kelas
+                    {currentUser ? 'Ganti Akun Role' : 'Login Portal Kelas'}
                   </h2>
                   <p className="text-xs text-[#7A624E]">
                     Masukkan akun pengurus atau warga kelas X-J
@@ -184,7 +204,7 @@ export default function Home({ currentUser, onLogin }) {
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-[#7A624E]">
-            Setiap role hanya dapat membuka tab yang diizinkan sesuai wewenangnya.
+            Setiap role memiliki wewenang spesifik dan seluruh akun dapat melihat Denah Kelas.
           </p>
         </div>
 

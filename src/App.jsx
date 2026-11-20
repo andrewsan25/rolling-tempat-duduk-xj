@@ -3,25 +3,39 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
-import { getSavedUser, saveLoggedUser } from './utils/authRoles';
+import {
+  getSavedUser,
+  saveLoggedUser,
+  saveCustomNameForRole,
+  attachCustomName,
+} from './utils/authRoles';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => getSavedUser());
   const [activeTab, setActiveTab] = useState(
     () => getSavedUser()?.allowedTabs?.[0] || 'seats'
   );
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLogin = (roleObj) => {
-    saveLoggedUser(roleObj);
-    setCurrentUser(roleObj);
-    if (roleObj?.allowedTabs?.length) {
-      setActiveTab(roleObj.allowedTabs[0]);
+    const withName = attachCustomName(roleObj);
+    saveLoggedUser(withName);
+    setCurrentUser(withName);
+    if (withName?.allowedTabs?.length) {
+      setActiveTab(withName.allowedTabs[0]);
     }
   };
 
   const handleLogout = () => {
     saveLoggedUser(null);
     setCurrentUser(null);
+    setIsSettingsOpen(false);
+  };
+
+  const handleUpdateUserName = (newName) => {
+    if (!currentUser) return;
+    const savedName = saveCustomNameForRole(currentUser.id, newName);
+    setCurrentUser((prev) => (prev ? { ...prev, customName: savedName } : null));
   };
 
   return (
@@ -43,6 +57,9 @@ export default function App() {
           onLogout={handleLogout}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          isSettingsOpen={isSettingsOpen}
+          setIsSettingsOpen={setIsSettingsOpen}
+          onUpdateUserName={handleUpdateUserName}
         />
         <main className="relative z-10 flex-1">
           <Routes>
@@ -52,6 +69,7 @@ export default function App() {
                 <Home
                   currentUser={currentUser}
                   onLogin={handleLogin}
+                  onOpenSettings={() => setIsSettingsOpen(true)}
                 />
               }
             />
