@@ -1,50 +1,66 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { LayoutGrid, Home, Sparkles } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
 
+  const navItems = [
+    { path: '/', label: 'Beranda', icon: Home },
+    { path: '/dashboard', label: 'Denah Kelas', icon: LayoutGrid },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/75 backdrop-blur-xl border-b border-[#eaeaea] transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 pt-3 pb-1">
+      <div className="max-w-7xl mx-auto h-16 px-4 sm:px-5 rounded-2xl glass-panel flex items-center justify-between">
+        {/* Brand */}
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center text-white shadow-sm group-hover:bg-blue-600 transition-colors">
+          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <span className="font-semibold text-base tracking-tight text-gray-900 block leading-none">
-              Seating Roll
-            </span>
-            <span className="text-xs text-gray-500 font-medium">
-              Classroom Manager
+            <div className="flex items-center gap-2">
+              <span className="font-display font-bold text-base tracking-tight text-slate-900 leading-none">
+                Seating Roll
+              </span>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200/70">
+                Kelas X-J
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium block mt-0.5">
+              Smart Classroom Seating
             </span>
           </div>
         </Link>
 
-        <nav className="flex items-center gap-1.5 bg-gray-100/80 p-1 rounded-full border border-gray-200/60">
-          <Link
-            to="/"
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              location.pathname === '/'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Home className="w-4 h-4" />
-            <span>Beranda</span>
-          </Link>
-          <Link
-            to="/dashboard"
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              location.pathname === '/dashboard'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span>Denah Kelas</span>
-          </Link>
+        {/* Animated Pill Navigation */}
+        <nav className="relative flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/70">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`relative flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors z-10 ${
+                  isActive
+                    ? 'text-blue-600'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeNavPill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 bg-white rounded-lg shadow-sm border border-slate-200/60 -z-10"
+                  />
+                )}
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>
