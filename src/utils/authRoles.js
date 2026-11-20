@@ -124,7 +124,7 @@ export const ROLES_CONFIG = [
     capabilities: [
       'Akses penuh melihat & mengedit Denah Tempat Duduk (Rotasi, Reroll, Edit Nama, Reset)',
       'Akses penuh menambah & mengubah Papan Pengumuman, Tugas, Ulangan, Piket & Keuangan',
-      'Melihat password akun role lain serta mengubah / mereset password akun di tab Kelola Akun',
+      'Melihat password akun role lain, mengelola daftar murid terdaftar, & mereset password di tab Kelola Akun',
       'Mengakses Catatan Pribadi (Notes) & Kalender Pribadi',
     ],
     allowedTabs: ['seats', 'announcements', 'piket', 'finance', 'personal', 'accounts'],
@@ -141,6 +141,7 @@ export const ROLES_CONFIG = [
 const AUTH_STORAGE_KEY = 'xj_portal_logged_user';
 const USER_NAMES_STORAGE_KEY = 'xj_portal_custom_names';
 const ROLE_PASSWORDS_STORAGE_KEY = 'xj_portal_role_passwords';
+const REGISTERED_STUDENTS_STORAGE_KEY = 'xj_portal_registered_students';
 
 export function getSavedRolePasswords() {
   try {
@@ -170,6 +171,66 @@ export function getEffectiveRolePassword(roleId, overrideMap) {
   return typeof customPass === 'string' && customPass.trim()
     ? customPass.trim()
     : role.defaultPassword;
+}
+
+export function getSavedRegisteredStudents() {
+  try {
+    const raw = localStorage.getItem(REGISTERED_STUDENTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveRegisteredStudentsList(list) {
+  try {
+    const clean = Array.isArray(list) ? list : [];
+    localStorage.setItem(REGISTERED_STUDENTS_STORAGE_KEY, JSON.stringify(clean));
+    return clean;
+  } catch {
+    return [];
+  }
+}
+
+export function upsertRegisteredStudentRecord(studentName, existingList) {
+  const cleanName = (studentName || '').trim();
+  if (!cleanName) return existingList || getSavedRegisteredStudents();
+
+  const userKey = `murid_${cleanName.toLowerCase().replace(/\s+/g, '_')}`;
+  const baseList = Array.isArray(existingList)
+    ? existingList
+    : getSavedRegisteredStudents();
+
+  const nowIso = new Date().toISOString();
+  const existingIdx = baseList.findIndex(
+    (s) =>
+      s.userKey === userKey ||
+      (s.name && s.name.toLowerCase() === cleanName.toLowerCase())
+  );
+
+  let nextList;
+  if (existingIdx >= 0) {
+    nextList = baseList.map((item, idx) =>
+      idx === existingIdx
+        ? { ...item, name: cleanName, userKey, lastLoginAt: nowIso }
+        : item
+    );
+  } else {
+    nextList = [
+      {
+        id: userKey,
+        name: cleanName,
+        userKey,
+        registeredAt: nowIso,
+        lastLoginAt: nowIso,
+      },
+      ...baseList,
+    ];
+  }
+
+  saveRegisteredStudentsList(nextList);
+  return nextList;
 }
 
 export function getSavedCustomNames() {
@@ -236,6 +297,7 @@ export function registerStudentByName(studentName) {
   };
   studentSession.userKey = `murid_${cleanName.toLowerCase().replace(/\s+/g, '_')}`;
   saveCustomNameForRole('murid', cleanName);
+  upsertRegisteredStudentRecord(cleanName);
   saveLoggedUser(studentSession);
   return studentSession;
 }

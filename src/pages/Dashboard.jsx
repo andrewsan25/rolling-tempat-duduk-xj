@@ -36,6 +36,9 @@ import {
   getUserStorageKey,
   saveRolePasswordsMap,
   getSavedRolePasswords,
+  getSavedRegisteredStudents,
+  saveRegisteredStudentsList,
+  upsertRegisteredStudentRecord,
 } from '../utils/authRoles';
 
 const STORAGE_KEY = 'rolling_tempat_duduk_xj_seats';
@@ -454,6 +457,17 @@ export default function Dashboard({
       setLoginError('');
       const studentSession = registerStudentByName(clean);
       if (studentSession) {
+        const nextStudents = upsertRegisteredStudentRecord(
+          clean,
+          portalData.registeredStudents || []
+        );
+        syncPortalToBackend(
+          {
+            ...portalData,
+            registeredStudents: nextStudents,
+          },
+          `Selamat datang, ${clean}!`
+        );
         onLogin(studentSession);
       }
     };
@@ -683,26 +697,26 @@ export default function Dashboard({
         )}
       </AnimatePresence>
 
-      {/* Welcome, [Nama] Header Banner di Dashboard */}
-      <div className="max-w-3xl mx-auto mb-6 p-5 sm:p-6 rounded-3xl glass-panel border border-[#DECBB3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Welcome, [Nama] Header Banner di Dashboard (1 Baris Memanjang) */}
+      <div className="w-full mb-6 px-5 py-4 rounded-3xl glass-panel border border-[#DECBB3] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-10 h-10 rounded-2xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center shrink-0 shadow-sm">
             <UserCheck className="w-5 h-5" />
           </div>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#8C6239]">
-              Dashboard Portal Kelas &bull; {currentUser.roleName}
-            </div>
-            <h2 className="font-display text-xl sm:text-2xl font-extrabold text-[#2C1E14]">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="font-display text-lg sm:text-xl font-extrabold text-[#2C1E14]">
               Welcome, {welcomeName}!
             </h2>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#EFE5D8] text-[#6F4E37] border border-[#DECBB3] text-xs font-bold">
+              {currentUser.roleName}
+            </span>
           </div>
         </div>
 
         <button
           type="button"
           onClick={() => setActiveTab('personal')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer shrink-0 ${
             activeTab === 'personal'
               ? 'bg-[#1C140E] text-[#FAF5EE] shadow-md'
               : 'bg-[#EFE5D8] hover:bg-[#E2D2BE] text-[#4A3322] border border-[#DECBB3]'
@@ -716,9 +730,9 @@ export default function Dashboard({
       {/* ================= TAB 1: DENAH TEMPAT DUDUK ================= */}
       {activeTab === 'seats' && currentUser.allowedTabs.includes('seats') && (
         <div>
-          {/* 2-Column Espresso Command Panel directly below Pill Navbar */}
-          <div className="max-w-3xl mx-auto espresso-panel rounded-3xl p-6 sm:p-8 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-white/10">
+          {/* 1 Baris Memanjang Espresso Command Panel */}
+          <div className="w-full espresso-panel rounded-3xl p-5 sm:p-6 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-white/10">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="font-display text-lg sm:text-xl font-bold text-[#FAF5EE]">
@@ -736,7 +750,7 @@ export default function Dashboard({
                     &bull; {namedCount}/40 Terisi
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-[#B09E8E] mt-1">
+                <p className="text-xs sm:text-sm text-[#B09E8E] mt-0.5">
                   {canEditSeats
                     ? 'Pilih aksi kontrol di bawah atau klik nama siswa pada meja untuk mengedit.'
                     : 'Mode Lihat: Gunakan pencarian untuk menemukan kursi Anda atau buka tab Catatan Pribadi.'}
@@ -744,7 +758,7 @@ export default function Dashboard({
               </div>
 
               {/* Search Student Input */}
-              <div className="relative w-full sm:w-56 shrink-0">
+              <div className="relative w-full sm:w-64 shrink-0">
                 <Search className="w-3.5 h-3.5 text-[#B09E8E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
@@ -764,9 +778,9 @@ export default function Dashboard({
               </div>
             </div>
 
-            {/* 2-Column Action Grid inside the Panel */}
+            {/* 1 Baris Memanjang (4 Kolom Horizontal) Action Grid */}
             {canEditSeats ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <button
                   type="button"
                   onClick={handleNormalRotation}
@@ -1006,12 +1020,29 @@ export default function Dashboard({
       {activeTab === 'accounts' && currentUser.allowedTabs.includes('accounts') && (
         <AdminAccountsTab
           rolePasswords={portalData.rolePasswords || {}}
+          registeredStudents={
+            (portalData.registeredStudents &&
+              portalData.registeredStudents.length > 0
+              ? portalData.registeredStudents
+              : getSavedRegisteredStudents()) || []
+          }
+          personalNotesMap={portalData.personalNotes || {}}
           onSaveRolePasswords={(nextPasswordsMap, msg) => {
             saveRolePasswordsMap(nextPasswordsMap);
             syncPortalToBackend(
               {
                 ...portalData,
                 rolePasswords: nextPasswordsMap,
+              },
+              msg
+            );
+          }}
+          onSaveRegisteredStudents={(nextStudentsList, msg) => {
+            saveRegisteredStudentsList(nextStudentsList);
+            syncPortalToBackend(
+              {
+                ...portalData,
+                registeredStudents: nextStudentsList,
               },
               msg
             );

@@ -67,14 +67,12 @@ export default function Navbar({
 
   const isDashboard = location.pathname === '/dashboard';
 
-  // Sinkronkan input nama saat modal settings dibuka
   useEffect(() => {
     if (currentUser) {
       setNameInput(currentUser.customName || '');
     }
   }, [currentUser, isSettingsOpen]);
 
-  // Tutup dropdown saat klik di luar
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -113,24 +111,24 @@ export default function Navbar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 pt-4 pb-2">
-        <div className="max-w-4xl mx-auto relative" ref={dropdownRef}>
-          {/* Floating Pill Navbar (Tanpa scrollbar / arrow key sama sekali) */}
-          <div className="pill-navbar rounded-full px-3.5 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+        <div className="max-w-7xl mx-auto relative" ref={dropdownRef}>
+          {/* 1 Baris Memanjang Floating Pill Navbar (Tidak terlipat jadi 2 baris) */}
+          <div className="pill-navbar rounded-full px-4 sm:px-5 py-2.5 flex items-center justify-between gap-3 sm:gap-6 whitespace-nowrap">
             {/* Left: Solid Warm Terracotta/Caramel Circle + Title */}
             <Link
               to="/"
               onClick={() => setAccountDropdownOpen(false)}
-              className="flex items-center gap-2.5 pl-1 group shrink-0"
+              className="flex items-center gap-2.5 pl-0.5 group shrink-0"
             >
               <span className="w-8 h-8 rounded-full bg-[#E06D3B] group-hover:scale-105 transition-transform block shrink-0 shadow-sm" />
-              <span className="font-display font-bold text-sm tracking-tight text-[#FAF5EE] hidden md:inline">
+              <span className="font-display font-bold text-sm tracking-tight text-[#FAF5EE] hidden sm:inline">
                 X-Jentreng 2026
               </span>
             </Link>
 
-            {/* Center: Clean Text Links without overflow-x-auto so no scrollbar arrows ever appear */}
-            <nav className="flex items-center justify-center flex-wrap gap-3 sm:gap-6 px-1">
+            {/* Center: 1 Baris Memanjang Horizontal Links */}
+            <nav className="flex items-center justify-center flex-nowrap gap-3 sm:gap-5 lg:gap-7">
               <Link
                 to="/"
                 onClick={() => setAccountDropdownOpen(false)}
@@ -174,7 +172,7 @@ export default function Navbar({
               })}
             </nav>
 
-            {/* Right: Account Dropdown Trigger (Settings & Log Out) or Masuk Portal */}
+            {/* Right: Account Dropdown Trigger (Settings & Log Out) or Portal Kelas */}
             <div className="shrink-0 relative">
               {currentUser ? (
                 <button
@@ -183,7 +181,7 @@ export default function Navbar({
                   className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full bg-[#FAF5EE] hover:bg-[#EFE5D8] text-[#1C140E] text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm"
                 >
                   <User className="w-3.5 h-3.5 text-[#8C6239]" />
-                  <span className="max-w-[110px] sm:max-w-[150px] truncate">
+                  <span className="max-w-[120px] sm:max-w-[160px] truncate">
                     {displayName}
                   </span>
                   <ChevronDown
@@ -210,7 +208,7 @@ export default function Navbar({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.96 }}
                     transition={{ duration: 0.16 }}
-                    className="absolute right-0 mt-3 w-64 espresso-panel rounded-2xl p-2 shadow-2xl z-50"
+                    className="absolute right-0 mt-3 w-64 espresso-panel rounded-2xl p-2 shadow-2xl z-50 whitespace-normal"
                   >
                     <div className="px-3.5 py-2.5 border-b border-white/10">
                       <div className="font-display font-bold text-sm text-[#FAF5EE] truncate">
@@ -304,7 +302,7 @@ export default function Navbar({
               <form onSubmit={handleSaveSettings} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[#5C4028] mb-1.5">
-                    Nama Anda (Tampil di Beranda & Navbar)
+                    Nama Anda (Tampil di Beranda & Dashboard)
                   </label>
                   <input
                     type="text"
@@ -315,7 +313,7 @@ export default function Navbar({
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
                   />
                   <p className="text-[11px] text-[#7A624E] mt-1.5">
-                    Nama ini akan ditampilkan pada sapaan <strong>&ldquo;Welcome, [Nama]&rdquo;</strong> di halaman utama.
+                    Nama ini akan ditampilkan pada sapaan <strong>&ldquo;Welcome, [Nama]&rdquo;</strong> di Beranda & Dashboard.
                   </p>
                 </div>
 

@@ -56,6 +56,43 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
     setErrorMsg('');
     const studentSession = registerStudentByName(clean);
     if (studentSession) {
+      // Sinkronkan juga daftar murid terdaftar ke Supabase di background
+      fetch(PORTAL_API_URL)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((portalJson) => {
+          if (!portalJson) return;
+          const baseList = Array.isArray(portalJson.registeredStudents)
+            ? portalJson.registeredStudents
+            : [];
+          const exists = baseList.some(
+            (s) =>
+              s.userKey === studentSession.userKey ||
+              (s.name && s.name.toLowerCase() === clean.toLowerCase())
+          );
+          if (!exists) {
+            const nowIso = new Date().toISOString();
+            const nextStudents = [
+              {
+                id: studentSession.userKey,
+                name: clean,
+                userKey: studentSession.userKey,
+                registeredAt: nowIso,
+                lastLoginAt: nowIso,
+              },
+              ...baseList,
+            ];
+            fetch(PORTAL_API_URL, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...portalJson,
+                registeredStudents: nextStudents,
+              }),
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+
       onLogin(studentSession);
       navigate('/dashboard');
     }
@@ -180,11 +217,10 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
                     setAuthMode('student');
                     setErrorMsg('');
                   }}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                    authMode === 'student'
-                      ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
-                      : 'text-[#5C4028] hover:text-[#2C1E14]'
-                  }`}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${authMode === 'student'
+                    ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
+                    : 'text-[#5C4028] hover:text-[#2C1E14]'
+                    }`}
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>Register Murid</span>
@@ -195,11 +231,10 @@ export default function Home({ currentUser, onLogin, onOpenSettings }) {
                     setAuthMode('officer');
                     setErrorMsg('');
                   }}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                    authMode === 'officer'
-                      ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
-                      : 'text-[#5C4028] hover:text-[#2C1E14]'
-                  }`}
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${authMode === 'officer'
+                    ? 'bg-[#1C140E] text-[#FAF5EE] shadow-sm'
+                    : 'text-[#5C4028] hover:text-[#2C1E14]'
+                    }`}
                 >
                   <KeyRound className="w-3.5 h-3.5" />
                   <span>Login Pengurus</span>
