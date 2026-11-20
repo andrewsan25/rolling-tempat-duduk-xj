@@ -39,7 +39,6 @@ export default function PiketTab({
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
       <div className="glass-panel rounded-3xl p-5 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center shadow-sm">
@@ -76,7 +75,6 @@ export default function PiketTab({
         </span>
       </div>
 
-      {/* 5 Hari Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         {piket.map((dayItem) => (
           <div
@@ -97,7 +95,6 @@ export default function PiketTab({
                 {dayItem.note}
               </p>
 
-              {/* Daftar Nama Anggota Piket */}
               <div className="space-y-2 mb-4">
                 {dayItem.members.map((member, idx) => (
                   <div
@@ -112,7 +109,6 @@ export default function PiketTab({
                         type="button"
                         onClick={() => handleRemoveMember(dayItem.day, idx)}
                         className="text-[#A8927E] hover:text-rose-600 cursor-pointer"
-                        title="Hapus dari hari ini"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -145,8 +141,7 @@ export default function PiketTab({
                 <button
                   type="button"
                   onClick={() => handleAddMember(dayItem.day)}
-                  className="p-1.5 rounded-xl bg-[#8C6239] hover:bg-[#6F4E37] text-[#FFFDF9] shrink-0 cursor-pointer"
-                  title="Tambah anggota piket"
+                  className="p-1.5 rounded-xl bg-[#1C140E] hover:bg-[#2C1E14] text-[#FFFDF9] shrink-0 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                 </button>

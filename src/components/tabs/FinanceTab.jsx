@@ -78,7 +78,6 @@ export default function FinanceTab({
 
   return (
     <div className="space-y-6">
-      {/* Banner Header */}
       <div className="glass-panel rounded-3xl p-5 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center shadow-sm">
@@ -104,7 +103,7 @@ export default function FinanceTab({
           {canEdit ? (
             <>
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Mode Edit Bendahara ({currentUser?.roleName})</span>
+              <span>Mode Edit ({currentUser?.roleName})</span>
             </>
           ) : (
             <>
@@ -115,7 +114,6 @@ export default function FinanceTab({
         </span>
       </div>
 
-      {/* 3 Kartu Ringkasan Saldo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-panel rounded-3xl p-5 border border-[#DECBB3]">
           <div className="flex items-center justify-between mb-2">
@@ -145,12 +143,12 @@ export default function FinanceTab({
           </div>
         </div>
 
-        <div className="rounded-3xl p-5 bg-gradient-to-br from-[#8C6239] to-[#5C3D22] text-[#FFFDF9] shadow-lg">
+        <div className="rounded-3xl p-5 espresso-panel text-[#FFFDF9]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#EFE5D8]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#E06D3B]">
               Saldo Akhir Kas Kelas
             </span>
-            <Wallet className="w-5 h-5 text-[#EFE5D8]" />
+            <Wallet className="w-5 h-5 text-[#E06D3B]" />
           </div>
           <div className="font-display text-2xl font-extrabold">
             {formatRupiah(summary.balance)}
@@ -158,7 +156,6 @@ export default function FinanceTab({
         </div>
       </div>
 
-      {/* Form Input Transaksi — Hanya muncul untuk Bendahara & Admin */}
       {canEdit && (
         <form
           onSubmit={handleAddTransaction}
@@ -237,12 +234,12 @@ export default function FinanceTab({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              placeholder="Keterangan transaksi (mis: Iuran Kas Minggu ke-3 / Beli Spidol)..."
+              placeholder="Keterangan transaksi (mis: Iuran Kas Minggu ke-3)..."
               className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14]"
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] hover:from-[#7A5230] hover:to-[#5C3D22] text-[#FFFDF9] text-sm font-semibold shadow-md cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] text-sm font-semibold shadow-md cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Simpan Transaksi</span>
@@ -251,7 +248,6 @@ export default function FinanceTab({
         </form>
       )}
 
-      {/* Tabel Riwayat Transaksi */}
       <div className="glass-panel rounded-3xl overflow-hidden border border-[#DECBB3]">
         <div className="px-5 py-4 border-b border-[#E6D7C3] flex items-center justify-between">
           <h3 className="font-display font-bold text-sm text-[#2C1E14]">
@@ -295,7 +291,6 @@ export default function FinanceTab({
                     type="button"
                     onClick={() => handleDeleteTransaction(item.id)}
                     className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-colors cursor-pointer"
-                    title="Hapus transaksi"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

@@ -7,10 +7,16 @@ import { getSavedUser, saveLoggedUser } from './utils/authRoles';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => getSavedUser());
+  const [activeTab, setActiveTab] = useState(
+    () => getSavedUser()?.allowedTabs?.[0] || 'seats'
+  );
 
   const handleLogin = (roleObj) => {
     saveLoggedUser(roleObj);
     setCurrentUser(roleObj);
+    if (roleObj?.allowedTabs?.length) {
+      setActiveTab(roleObj.allowedTabs[0]);
+    }
   };
 
   const handleLogout = () => {
@@ -32,7 +38,12 @@ export default function App() {
           <div className="absolute inset-0 bg-dot-grid opacity-75" />
         </div>
 
-        <Navbar currentUser={currentUser} onLogout={handleLogout} />
+        <Navbar
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
         <main className="relative z-10 flex-1">
           <Routes>
             <Route
@@ -51,6 +62,8 @@ export default function App() {
                   currentUser={currentUser}
                   onLogin={handleLogin}
                   onLogout={handleLogout}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
                 />
               }
             />

@@ -69,7 +69,6 @@ function SeatInput({
           : ''
       }`}
     >
-      {/* Top Row: Kode Kursi + Status */}
       <div className="flex items-center justify-between mb-2">
         <span
           className={`inline-flex items-center justify-center min-w-[1.6rem] h-5 px-1.5 rounded-md text-[10px] font-bold tracking-tight ${
@@ -99,7 +98,6 @@ function SeatInput({
         </div>
       </div>
 
-      {/* Avatar + Inline Input */}
       <div className="flex items-center gap-2">
         <div
           className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold ${
@@ -158,7 +156,6 @@ export default function DeskCard({
       transition={{ duration: 0.18 }}
       className="relative bg-[#FFFDF9]/95 backdrop-blur-md rounded-2xl p-3.5 shadow-[0_2px_10px_-3px_rgba(92,64,40,0.07)] hover:shadow-[0_12px_28px_-8px_rgba(140,98,57,0.16)] border border-[#E2D2BE] transition-shadow duration-200 flex flex-col justify-between overflow-hidden"
     >
-      {/* Top Desk Warm Wood Accent Bar */}
       <div
         className={`absolute top-0 inset-x-0 h-1 ${
           isEvenRow
@@ -167,7 +164,6 @@ export default function DeskCard({
         }`}
       />
 
-      {/* Header Meja */}
       <div className="flex items-center justify-between mb-2.5 pt-0.5 px-0.5">
         <div className="flex items-center gap-1.5">
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-[#EFE5D8] text-[10px] font-bold text-[#5C4028]">
@@ -190,11 +186,6 @@ export default function DeskCard({
               ? 'bg-[#EFE5D8] text-[#6F4E37]'
               : 'bg-[#F5E6D3] text-[#8C5828]'
           }`}
-          title={
-            isEvenRow
-              ? 'Alur Ular: Kiri ke Kanan'
-              : 'Alur Ular: Kanan ke Kiri'
-          }
         >
           {isEvenRow ? (
             <>
@@ -210,7 +201,6 @@ export default function DeskCard({
         </span>
       </div>
 
-      {/* 2 Kursi dalam 1 Meja Ganda: Kiri & Kanan */}
       <div className="grid grid-cols-2 gap-2">
         <SeatInput
           seat={leftSeat}

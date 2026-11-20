@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   UserCheck,
   Lock,
-  Sparkles,
 } from 'lucide-react';
 import { ROLES_CONFIG, authenticateUser } from '../utils/authRoles';
 
@@ -22,15 +21,10 @@ export default function Home({ currentUser, onLogin }) {
     e.preventDefault();
     const role = authenticateUser(username, password);
     if (!role) {
-      setErrorMsg('Username atau password tidak sesuai. Silakan cek daftar akun di bawah.');
+      setErrorMsg('Username atau password yang Anda masukkan salah.');
       return;
     }
     setErrorMsg('');
-    onLogin(role);
-    navigate('/dashboard');
-  };
-
-  const handleQuickLogin = (role) => {
     onLogin(role);
     navigate('/dashboard');
   };
@@ -49,7 +43,7 @@ export default function Home({ currentUser, onLogin }) {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-panel">
             <span className="w-2 h-2 rounded-full bg-[#8C6239] animate-pulse" />
             <span className="text-xs font-bold text-[#5C3D22]">
-              Portal Kelas X-Jentreng 2026 &bull; Role-Based Access Control
+              Portal Kelas X-Jentreng 2026 &bull; Satu Kelas, Satu Keluarga
             </span>
           </div>
 
@@ -60,13 +54,25 @@ export default function Home({ currentUser, onLogin }) {
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-[#6E5644] leading-relaxed max-w-2xl">
-            Setiap pengurus dan warga kelas memiliki hak akses khusus sesuai jabatannya:
-            mulai dari <span className="font-bold text-[#4A3322]">Denah Kursi (Geser & Reroll)</span>,{' '}
-            <span className="font-bold text-[#4A3322]">Papan Pengumuman & Kalender Ter-Sync</span>,{' '}
-            <span className="font-bold text-[#4A3322]">Jadwal Piket</span>, hingga{' '}
-            <span className="font-bold text-[#4A3322]">Laporan Keuangan Kas</span>.
-          </p>
+          {/* Teks Karangan Kelas yang Kompak + Teks Sesuai Foto */}
+          <div className="space-y-3.5 max-w-2xl">
+            <p className="text-base sm:text-lg text-[#6E5644] leading-relaxed">
+              Di <span className="font-bold text-[#4A3322]">X-Jentreng 2026</span>, empat puluh
+              kepala dengan cerita dan mimpi yang berbeda tumbuh menjadi satu keluarga yang utuh.
+              Kami percaya bahwa kekompakan bukan sekadar duduk di ruangan yang sama, melainkan
+              tentang saling merangkul, berbagi tawa di sela padatnya pelajaran, bergerak bersama
+              menjaga kenyamanan kelas, dan memastikan tidak ada satu pun teman yang berjalan
+              sendirian.
+            </p>
+
+            <p className="text-base sm:text-lg text-[#6E5644] leading-relaxed">
+              Setiap pengurus dan warga kelas memiliki hak akses khusus sesuai jabatannya:
+              mulai dari <span className="font-bold text-[#4A3322]">Denah Kursi (Geser & Reroll)</span>,{' '}
+              <span className="font-bold text-[#4A3322]">Papan Pengumuman & Kalender Ter-Sync</span>,{' '}
+              <span className="font-bold text-[#4A3322]">Jadwal Piket</span>, hingga{' '}
+              <span className="font-bold text-[#4A3322]">Laporan Keuangan Kas</span>.
+            </p>
+          </div>
 
           {currentUser && (
             <div className="p-4 rounded-2xl glass-panel flex flex-wrap items-center justify-between gap-3 border-2 border-[#C8AA88]">
@@ -79,13 +85,13 @@ export default function Home({ currentUser, onLogin }) {
                     Sedang login sebagai:
                   </div>
                   <div className="font-display font-bold text-base text-[#2C1E14]">
-                    {currentUser.roleName} (<code className="text-xs">{currentUser.username}</code>)
+                    {currentUser.roleName}
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] text-[#FFFDF9] text-sm font-semibold shadow-md cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] text-sm font-semibold shadow-md cursor-pointer"
               >
                 <span>Buka Dashboard Anda</span>
                 <ArrowRight className="w-4 h-4" />
@@ -115,7 +121,7 @@ export default function Home({ currentUser, onLogin }) {
                     Login Portal Kelas
                   </h2>
                   <p className="text-xs text-[#7A624E]">
-                    Masuk sesuai role untuk membuka tab akses Anda
+                    Masukkan akun pengurus atau warga kelas X-J
                   </p>
                 </div>
               </div>
@@ -136,7 +142,7 @@ export default function Home({ currentUser, onLogin }) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                placeholder="ketua / wakil / bendahara / sekretaris / murid / admin"
+                placeholder="Masukkan username..."
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
               />
             </div>
@@ -150,35 +156,31 @@ export default function Home({ currentUser, onLogin }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Masukkan password role..."
+                placeholder="Masukkan password..."
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] hover:from-[#7A5230] hover:to-[#5C3D22] text-[#FFFDF9] font-semibold text-sm shadow-md shadow-[#8C6239]/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <Lock className="w-4 h-4" />
               <span>Masuk ke Portal Kelas</span>
             </button>
-
-            <div className="pt-2 border-t border-[#E6D7C3] text-[11px] text-[#7A624E] text-center">
-              Atau klik tombol <strong>&ldquo;Masuk Cepat&rdquo;</strong> pada salah satu kartu Role di bawah ini:
-            </div>
           </form>
         </motion.div>
       </div>
 
-      {/* Daftar 6 Role, Deskripsi Tugas & Akun (User + Password) */}
+      {/* Daftar 6 Role & Deskripsi Tugas (Tanpa Username/Password & Tanpa Masuk Cepat) */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-[#8C6239]">
-              Pembagian Hak Akses & Akun
+              Struktur & Pembagian Akses Kelas
             </span>
             <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#2C1E14]">
-              Deskripsi Role & Kredensial Login
+              Deskripsi Peran & Hak Akses
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-[#7A624E]">
@@ -194,7 +196,6 @@ export default function Home({ currentUser, onLogin }) {
               className="glass-panel rounded-3xl p-6 flex flex-col justify-between border border-[#DECBB3]"
             >
               <div>
-                {/* Role Header */}
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span
                     className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold shadow-xs ${role.badgeColor}`}
@@ -203,7 +204,7 @@ export default function Home({ currentUser, onLogin }) {
                     <span>{role.roleName}</span>
                   </span>
                   <span className="text-[11px] font-bold text-[#8C735E]">
-                    {role.allowedTabs.length} Tab Aktif
+                    {role.allowedTabs.length} Tab Akses
                   </span>
                 </div>
 
@@ -211,10 +212,9 @@ export default function Home({ currentUser, onLogin }) {
                   {role.shortDesc}
                 </p>
 
-                {/* Capabilities List */}
-                <div className="space-y-2 mb-5">
+                <div className="space-y-2">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-[#8C6239]">
-                    Yang Bisa Dilakukan:
+                    Wewenang & Hak Akses:
                   </div>
                   {role.capabilities.map((cap, idx) => (
                     <div
@@ -226,33 +226,6 @@ export default function Home({ currentUser, onLogin }) {
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Credentials Box + Quick Login Button */}
-              <div className="pt-4 border-t border-[#E6D7C3] space-y-3">
-                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-[#FAF5EE] border border-[#E2D2BE] text-xs">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase text-[#8C735E] block">
-                      Username
-                    </span>
-                    <code className="font-bold text-[#2C1E14]">{role.username}</code>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold uppercase text-[#8C735E] block">
-                      Password
-                    </span>
-                    <code className="font-bold text-[#8C6239]">{role.password}</code>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin(role)}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#EFE5D8] hover:bg-[#8C6239] text-[#4A3322] hover:text-[#FFFDF9] font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Masuk Cepat sebagai {role.roleName}</span>
-                </button>
               </div>
             </motion.div>
           ))}

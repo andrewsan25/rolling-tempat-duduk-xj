@@ -32,11 +32,10 @@ export default function AnnouncementsTab({
 }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0..11
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('Semua');
 
-  // Form state untuk Sekretaris / Admin
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Tugas');
   const [subject, setSubject] = useState('');
@@ -48,7 +47,6 @@ export default function AnnouncementsTab({
   });
   const [notes, setNotes] = useState('');
 
-  // Map tanggal (YYYY-MM-DD) -> daftar catatan untuk Kalender Sync
   const eventsByDate = useMemo(() => {
     const map = {};
     announcements.forEach((item) => {
@@ -59,7 +57,6 @@ export default function AnnouncementsTab({
     return map;
   }, [announcements]);
 
-  // Bangun grid kalender bulan aktif
   const calendarDays = useMemo(() => {
     const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
     const totalDays = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -107,7 +104,6 @@ export default function AnnouncementsTab({
       author: currentUser?.roleName || 'Sekretaris',
     };
 
-    // Sinkronkan bulan kalender ke tanggal yang baru ditulis
     const [y, m] = date.split('-').map(Number);
     if (y && m) {
       setViewYear(y);
@@ -152,9 +148,7 @@ export default function AnnouncementsTab({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* Kolom Kiri (7 col): Form Catatan Kelas (Sekretaris/Admin) + Daftar Pengumuman Tugas & Ulangan */}
       <div className="lg:col-span-7 space-y-6">
-        {/* Banner Status Akses */}
         <div className="glass-panel rounded-3xl p-5 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#8C6239] text-[#FFFDF9] flex items-center justify-center shadow-sm">
@@ -191,7 +185,6 @@ export default function AnnouncementsTab({
           </span>
         </div>
 
-        {/* Form Input Catatan Kelas — Hanya untuk Sekretaris & Admin */}
         {canEdit && (
           <form
             onSubmit={handleAddNote}
@@ -280,7 +273,7 @@ export default function AnnouncementsTab({
             <div className="flex justify-end">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] hover:from-[#7A5230] hover:to-[#5C3D22] text-[#FFFDF9] text-sm font-semibold shadow-md transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] text-sm font-semibold shadow-md transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Simpan & Sync ke Kalender</span>
@@ -289,16 +282,15 @@ export default function AnnouncementsTab({
           </form>
         )}
 
-        {/* Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             {['Semua', 'Tugas', 'Ulangan', 'Pengumuman'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilterCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                   filterCategory === cat
-                    ? 'bg-[#8C6239] text-[#FFFDF9] shadow-xs'
+                    ? 'bg-[#1C140E] text-[#FAF5EE] shadow-xs'
                     : 'bg-[#FFFDF9] text-[#6F4E37] border border-[#DECBB3] hover:bg-[#EFE5D8]'
                 }`}
               >
@@ -310,7 +302,7 @@ export default function AnnouncementsTab({
           {selectedDate && (
             <button
               onClick={() => setSelectedDate('')}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#EFE5D8] text-[#5C3D22] text-xs font-bold border border-[#DECBB3] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFE5D8] text-[#5C3D22] text-xs font-bold border border-[#DECBB3] cursor-pointer"
             >
               <span>Filter Tanggal: {selectedDate}</span>
               <span>&times;</span>
@@ -318,7 +310,6 @@ export default function AnnouncementsTab({
           )}
         </div>
 
-        {/* Daftar Pengumuman / Tugas / Ulangan */}
         <div className="space-y-3">
           {filteredList.length === 0 ? (
             <div className="glass-panel rounded-3xl p-8 text-center text-sm text-[#8C735E]">
@@ -375,7 +366,6 @@ export default function AnnouncementsTab({
         </div>
       </div>
 
-      {/* Kolom Kanan (5 col): Kalender Kelas Interaktif (Auto-Sync) */}
       <div className="lg:col-span-5">
         <div className="glass-panel rounded-3xl p-5 sm:p-6 sticky top-24">
           <div className="flex items-center justify-between mb-4">
@@ -392,33 +382,26 @@ export default function AnnouncementsTab({
               <button
                 onClick={handlePrevMonth}
                 className="p-2 rounded-xl bg-[#EFE5D8] hover:bg-[#E2D2BE] text-[#5C3D22] transition-colors cursor-pointer"
-                aria-label="Bulan sebelumnya"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleNextMonth}
                 className="p-2 rounded-xl bg-[#EFE5D8] hover:bg-[#E2D2BE] text-[#5C3D22] transition-colors cursor-pointer"
-                aria-label="Bulan berikutnya"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Header Hari */}
           <div className="grid grid-cols-7 gap-1.5 mb-2 text-center">
             {DAY_HEADERS.map((d) => (
-              <div
-                key={d}
-                className="text-[11px] font-bold text-[#8C735E] py-1"
-              >
+              <div key={d} className="text-[11px] font-bold text-[#8C735E] py-1">
                 {d}
               </div>
             ))}
           </div>
 
-          {/* Grid Tanggal */}
           <div className="grid grid-cols-7 gap-1.5">
             {calendarDays.map((cell, idx) => {
               if (!cell) {
@@ -436,7 +419,7 @@ export default function AnnouncementsTab({
                   onClick={() => handleSelectCalendarDate(cell.dateStr)}
                   className={`h-14 p-1.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#8C6239] text-[#FFFDF9] border-[#6F4E37] shadow-md'
+                      ? 'bg-[#1C140E] text-[#FFFDF9] border-[#1C140E] shadow-md'
                       : hasEvents
                         ? 'bg-[#F3E5D5] border-[#C8AA88] hover:bg-[#EAD7C0]'
                         : 'bg-[#FFFDF9]/80 border-[#E6D7C3] hover:bg-[#EFE5D8]/60'
@@ -451,46 +434,27 @@ export default function AnnouncementsTab({
                   </span>
 
                   {hasEvents && (
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <span
-                        className={`px-1.5 py-0.2 rounded text-[9px] font-bold truncate max-w-full ${
-                          isSelected
-                            ? 'bg-[#FFFDF9] text-[#5C3D22]'
-                            : hasExam
-                              ? 'bg-[#8C4A32] text-[#FFFDF9]'
-                              : 'bg-[#8C6239] text-[#FFFDF9]'
-                        }`}
-                      >
-                        {cell.events.length} Agenda
-                      </span>
-                    </div>
+                    <span
+                      className={`px-1.5 py-0.2 rounded text-[9px] font-bold truncate max-w-full ${
+                        isSelected
+                          ? 'bg-[#FFFDF9] text-[#1C140E]'
+                          : hasExam
+                            ? 'bg-[#8C4A32] text-[#FFFDF9]'
+                            : 'bg-[#8C6239] text-[#FFFDF9]'
+                      }`}
+                    >
+                      {cell.events.length} Agenda
+                    </span>
                   )}
                 </button>
               );
             })}
           </div>
 
-          {/* Keterangan Kalender */}
           <div className="mt-5 pt-4 border-t border-[#DECBB3] space-y-2 text-xs text-[#6E5644]">
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#8C6239]" />
-                Klik tanggal untuk memfilter jadwal pada hari tersebut
-              </span>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap pt-1">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#8C4A32]" />
-                <span>Jadwal Ulangan</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#8C6239]" />
-                <span>Tugas / PR</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#C4A484]" />
-                <span>Pengumuman</span>
-              </span>
+            <div className="flex items-center gap-1.5 font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#8C6239]" />
+              <span>Klik tanggal untuk memfilter jadwal hari tersebut</span>
             </div>
           </div>
         </div>

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  RefreshCw,
-  ArrowUpCircle,
   RotateCcw,
   CheckCircle2,
   AlertCircle,
@@ -11,16 +9,9 @@ import {
   Database,
   Search,
   X,
-  Users,
-  Sparkles,
-  Shuffle,
-  LayoutGrid,
-  Bell,
-  ClipboardCheck,
-  Wallet,
   Lock,
+  ArrowRight,
   KeyRound,
-  ShieldCheck,
 } from 'lucide-react';
 import DeskCard from '../components/DeskCard';
 import AnnouncementsTab from '../components/tabs/AnnouncementsTab';
@@ -34,7 +25,7 @@ import {
   rerollRandomSeats,
   SNAKE_LABELS,
 } from '../utils/seatingLogic';
-import { ROLES_CONFIG, authenticateUser } from '../utils/authRoles';
+import { authenticateUser } from '../utils/authRoles';
 
 const STORAGE_KEY = 'rolling_tempat_duduk_xj_seats';
 const PORTAL_STORAGE_KEY = 'rolling_tempat_duduk_xj_portal';
@@ -46,13 +37,6 @@ const API_BASE_URL =
 const PORTAL_API_URL = import.meta.env.DEV
   ? 'http://localhost:5000/api/portal'
   : '/api/portal';
-
-const ALL_TABS = [
-  { id: 'seats', label: 'Denah Tempat Duduk', icon: LayoutGrid },
-  { id: 'announcements', label: 'Papan Pengumuman & Kalender', icon: Bell },
-  { id: 'piket', label: 'Jadwal Piket', icon: ClipboardCheck },
-  { id: 'finance', label: 'Laporan Keuangan', icon: Wallet },
-];
 
 function getInitialPortalFallback() {
   const now = new Date();
@@ -220,7 +204,12 @@ function saveCachedPortal(portalData) {
   }
 }
 
-export default function Dashboard({ currentUser, onLogin }) {
+export default function Dashboard({
+  currentUser,
+  onLogin,
+  activeTab,
+  setActiveTab,
+}) {
   const [seats, setSeats] = useState(() => loadCachedSeats());
   const [portalData, setPortalData] = useState(() => loadCachedPortal());
   const [loading, setLoading] = useState(true);
@@ -230,27 +219,15 @@ export default function Dashboard({ currentUser, onLogin }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
 
-  // Login gate state jika belum login
   const [loginUser, setLoginUser] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Tab aktif (hanya boleh dari allowedTabs role yang sedang login)
-  const allowedTabObjects = useMemo(() => {
-    if (!currentUser) return [];
-    return ALL_TABS.filter((t) => currentUser.allowedTabs.includes(t.id));
-  }, [currentUser]);
-
-  const [activeTab, setActiveTab] = useState(() =>
-    currentUser?.allowedTabs?.[0] || 'seats'
-  );
-
-  // Pastikan setiap ganti role, activeTab otomatis menyesuaikan tab yang diizinkan
   useEffect(() => {
     if (currentUser && !currentUser.allowedTabs.includes(activeTab)) {
       setActiveTab(currentUser.allowedTabs[0]);
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser, activeTab, setActiveTab]);
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
@@ -265,7 +242,6 @@ export default function Dashboard({ currentUser, onLogin }) {
     ).length;
   }, [seats]);
 
-  // Fetch data kursi & data portal (Pengumuman, Piket, Keuangan) dari Supabase
   useEffect(() => {
     let isMounted = true;
 
@@ -322,7 +298,6 @@ export default function Dashboard({ currentUser, onLogin }) {
     };
   }, []);
 
-  // Helper simpan perubahan Portal Data (Pengumuman / Piket / Keuangan) ke Supabase
   const syncPortalToBackend = async (nextPortalData, successMsg) => {
     setPortalData(nextPortalData);
     saveCachedPortal(nextPortalData);
@@ -341,7 +316,6 @@ export default function Dashboard({ currentUser, onLogin }) {
     }
   };
 
-  // Update 1 nama kursi
   const handleUpdateSingleSeat = async (seatId, newName, snakeIndex) => {
     if (!currentUser?.permissions?.canEditSeats) return;
 
@@ -367,7 +341,7 @@ export default function Dashboard({ currentUser, onLogin }) {
 
       if (!response.ok) throw new Error('Gagal menyimpan ke Supabase');
       setIsOfflineMode(false);
-      showToast(`Kursi ${SNAKE_LABELS[snakeIndex]} berhasil disimpan ke Supabase.`);
+      showToast(`Kursi ${SNAKE_LABELS[snakeIndex]} berhasil disimpan.`);
     } catch {
       setIsOfflineMode(true);
       showToast(
@@ -377,7 +351,6 @@ export default function Dashboard({ currentUser, onLogin }) {
     }
   };
 
-  // Batch update kursi setelah rotasi / reroll / reset
   const syncBatchToBackend = async (updatedSeats, labelRotasi) => {
     saveCachedSeats(updatedSeats);
     setSyncing(true);
@@ -428,13 +401,13 @@ export default function Dashboard({ currentUser, onLogin }) {
     syncBatchToBackend(defaults, 'Reset Formasi Awal');
   };
 
-  // Jika belum login, tampilkan Login Gate
+  // Login Gate (tanpa daftar username/password & tanpa masuk cepat)
   if (!currentUser) {
     const handleGateLogin = (e) => {
       e.preventDefault();
       const role = authenticateUser(loginUser, loginPass);
       if (!role) {
-        setLoginError('Username atau password salah. Klik salah satu role di bawah untuk auto-login.');
+        setLoginError('Username atau password yang Anda masukkan salah.');
         return;
       }
       setLoginError('');
@@ -442,18 +415,18 @@ export default function Dashboard({ currentUser, onLogin }) {
     };
 
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-md mx-auto px-4 py-14">
         <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-[#DECBB3] shadow-xl">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8C6239] to-[#5C3D22] text-[#FFFDF9] flex items-center justify-center shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8C6239] to-[#5C3D22] text-[#FFFDF9] flex items-center justify-center shadow-md shrink-0">
               <KeyRound className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="font-display text-2xl font-extrabold text-[#2C1E14]">
-                Login Diperlukan
+              <h1 className="font-display text-xl sm:text-2xl font-extrabold text-[#2C1E14]">
+                Login Portal Kelas
               </h1>
-              <p className="text-xs sm:text-sm text-[#7A624E]">
-                Silakan masuk dengan akun role Anda untuk mengakses tab dashboard yang sesuai.
+              <p className="text-xs text-[#7A624E]">
+                Silakan masuk dengan akun role Anda untuk mengakses dashboard.
               </p>
             </div>
           </div>
@@ -464,56 +437,41 @@ export default function Dashboard({ currentUser, onLogin }) {
             </div>
           )}
 
-          <form onSubmit={handleGateLogin} className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <input
-              type="text"
-              value={loginUser}
-              onChange={(e) => setLoginUser(e.target.value)}
-              placeholder="Username (mis: ketua)"
-              required
-              className="px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14]"
-            />
-            <input
-              type="password"
-              value={loginPass}
-              onChange={(e) => setLoginPass(e.target.value)}
-              placeholder="Password"
-              required
-              className="px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14]"
-            />
+          <form onSubmit={handleGateLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                Username
+              </label>
+              <input
+                type="text"
+                value={loginUser}
+                onChange={(e) => setLoginUser(e.target.value)}
+                placeholder="Masukkan username..."
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-[#5C4028] mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={loginPass}
+                onChange={(e) => setLoginPass(e.target.value)}
+                placeholder="Masukkan password..."
+                required
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-sm font-semibold text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:border-[#8C6239]"
+              />
+            </div>
             <button
               type="submit"
-              className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] text-[#FFFDF9] font-semibold text-sm shadow-md cursor-pointer"
+              className="w-full py-3 px-5 rounded-full bg-[#1C140E] hover:bg-[#2C1E14] text-[#FAF5EE] font-semibold text-sm shadow-md cursor-pointer flex items-center justify-center gap-2"
             >
-              Masuk Sekarang
+              <Lock className="w-4 h-4" />
+              <span>Masuk Sekarang</span>
             </button>
           </form>
-
-          <div className="pt-5 border-t border-[#E6D7C3]">
-            <div className="text-xs font-bold uppercase tracking-wider text-[#8C6239] mb-3">
-              Pilih Role untuk Masuk Cepat:
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              {ROLES_CONFIG.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => onLogin(r)}
-                  className="p-3 rounded-2xl bg-[#FFFDF9] hover:bg-[#EFE5D8] border border-[#DECBB3] text-left transition-all cursor-pointer flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-display font-bold text-xs text-[#2C1E14]">
-                      {r.roleName}
-                    </div>
-                    <div className="text-[11px] text-[#7A624E]">
-                      <code>{r.username}</code> / <code>{r.password}</code>
-                    </div>
-                  </div>
-                  <ShieldCheck className="w-4 h-4 text-[#8C6239]" />
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -574,13 +532,13 @@ export default function Dashboard({ currentUser, onLogin }) {
               <div className="flex items-center justify-end gap-2.5">
                 <button
                   onClick={() => setShowResetModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#EFE5D8] text-[#5C3D22] text-sm font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-full bg-[#EFE5D8] text-[#5C3D22] text-sm font-semibold cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   onClick={confirmResetDefault}
-                  className="px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold shadow-sm cursor-pointer"
+                  className="px-4 py-2 rounded-full bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold cursor-pointer"
                 >
                   Ya, Reset
                 </button>
@@ -590,178 +548,150 @@ export default function Dashboard({ currentUser, onLogin }) {
         )}
       </AnimatePresence>
 
-      {/* Role Banner & Allowed Navigation Tabs */}
-      <div className="glass-panel rounded-3xl p-4 sm:p-5 mb-6 border border-[#DECBB3]">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Info Role Aktif */}
-          <div className="flex items-center gap-3">
-            <div className={`px-3.5 py-2 rounded-2xl text-xs font-bold shadow-xs flex items-center gap-1.5 ${currentUser.badgeColor}`}>
-              <ShieldCheck className="w-4 h-4" />
-              <span>{currentUser.roleName}</span>
-            </div>
-            <div>
-              <div className="text-xs font-bold text-[#2C1E14]">
-                Hak Akses Role: {currentUser.roleName}
-              </div>
-              <div className="text-[11px] text-[#7A624E]">
-                {currentUser.shortDesc}
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Switcher — HANYA menampilkan tab yang diizinkan untuk Role ini */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-[#EFE5D8]/90 p-1.5 rounded-2xl border border-[#DECBB3]">
-            {allowedTabObjects.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-[#8C6239] text-[#FFFDF9] shadow-sm'
-                      : 'text-[#5C4028] hover:bg-[#FFFDF9]/70'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* ================= TAB 1: DENAH TEMPAT DUDUK ================= */}
       {activeTab === 'seats' && currentUser.allowedTabs.includes('seats') && (
         <div>
-          {/* Command Header Card */}
-          <div className="glass-panel rounded-3xl p-5 sm:p-6 mb-7">
-            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+          {/* 2-Column Espresso Command Panel directly below Pill Navbar (Persis gaya kartu 2 kolom pada gambar referensi) */}
+          <div className="max-w-3xl mx-auto espresso-panel rounded-3xl p-6 sm:p-8 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-white/10">
               <div>
-                <div className="flex items-center gap-2.5 flex-wrap mb-1.5">
-                  <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2C1E14]">
-                    Denah Tempat Duduk Kelas X-J
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="font-display text-lg sm:text-xl font-bold text-[#FAF5EE]">
+                    Denah Tempat Duduk
                   </h1>
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                      isOfflineMode
-                        ? 'bg-amber-50 text-amber-800 border border-amber-300'
-                        : 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                    }`}
-                  >
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/[0.08] text-[#FAF5EE]">
                     <span
-                      className={`w-2 h-2 rounded-full ${
-                        isOfflineMode ? 'bg-amber-500' : 'bg-emerald-600 animate-pulse'
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isOfflineMode ? 'bg-amber-400' : 'bg-emerald-400'
                       }`}
                     />
                     {isOfflineMode ? 'Cache Lokal' : 'Supabase Live'}
                   </span>
-
-                  {!canEditSeats && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#EFE5D8] text-[#6F4E37] border border-[#DECBB3]">
-                      <Lock className="w-3 h-3" />
-                      <span>Hanya Lihat (Murid Biasa)</span>
-                    </span>
-                  )}
+                  <span className="text-xs text-[#B09E8E]">
+                    &bull; {namedCount}/40 Terisi
+                  </span>
                 </div>
-                <p className="text-xs sm:text-sm text-[#7A624E]">
+                <p className="text-xs sm:text-sm text-[#B09E8E] mt-1">
                   {canEditSeats
-                    ? 'Ketua Kelas, Wakil, & Admin dapat mengedit nama siswa langsung, menggeser rotasi, atau mengacak kursi (Reroll).'
-                    : 'Mode Lihat: Gunakan kolom pencarian di bawah untuk menemukan posisi tempat duduk Anda.'}
+                    ? 'Pilih aksi kontrol di bawah atau klik nama siswa pada meja untuk mengedit.'
+                    : 'Mode Lihat (Murid Biasa): Gunakan pencarian untuk menemukan kursi Anda.'}
                 </p>
               </div>
 
-              {/* Tombol Kontrol Rotasi & Reroll — Hanya untuk Ketua, Wakil, dan Admin */}
-              {canEditSeats && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={handleNormalRotation}
-                    disabled={syncing || loading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#8C6239] to-[#6F4E37] hover:from-[#7A5230] hover:to-[#5C3D22] active:scale-[0.98] text-[#FFFDF9] font-semibold text-xs sm:text-sm shadow-md transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                    <span>Rotasi Biasa (Geser 1)</span>
-                  </button>
-
-                  <button
-                    onClick={handleFiveDayRotation}
-                    disabled={syncing || loading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#4A3322] to-[#2C1E14] hover:from-[#5C3D22] hover:to-[#3A281B] active:scale-[0.98] text-[#FFFDF9] font-semibold text-xs sm:text-sm shadow-md transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    <ArrowUpCircle className="w-4 h-4 text-[#DFC7AC]" />
-                    <span>Rotasi 5 Hari (Kanan Maju)</span>
-                  </button>
-
-                  <button
-                    onClick={handleRerollSeats}
-                    disabled={syncing || loading}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#EFE5D8] hover:bg-[#E2D2BE] text-[#4A3322] border border-[#C8AA88] font-bold text-xs sm:text-sm transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    <Shuffle className="w-4 h-4 text-[#8C6239]" />
-                    <span>Reroll (Acak)</span>
-                  </button>
-
-                  <button
-                    onClick={() => setShowResetModal(true)}
-                    disabled={syncing || loading}
-                    title="Reset ke formasi awal"
-                    className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#FFFDF9] hover:bg-rose-50 hover:text-rose-700 text-[#6E5644] border border-[#DECBB3] font-semibold text-xs sm:text-sm transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span className="hidden sm:inline">Reset</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Sub-bar: Quick Stats + Student Search */}
-            <div className="mt-5 pt-4 border-t border-[#E6D7C3] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EFE5D8] text-xs font-bold text-[#4A3322]">
-                  <Users className="w-3.5 h-3.5 text-[#8C6239]" />
-                  <span>40 Kursi &bull; 20 Meja Ganda</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F3E5D5] text-xs font-bold text-[#6F4E37]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#8C6239]" />
-                  <span>{namedCount} / 40 Nama Terisi</span>
-                </span>
-              </div>
-
-              <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 text-[#9C8470] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {/* Search Student Input */}
+              <div className="relative w-full sm:w-56 shrink-0">
+                <Search className="w-3.5 h-3.5 text-[#B09E8E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari nama siswa atau kode kursi..."
-                  className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#FFFDF9] border border-[#DECBB3] text-xs sm:text-sm text-[#2C1E14] placeholder-[#A8927E] focus:outline-none focus:ring-2 focus:ring-[#8C6239]/25 focus:border-[#8C6239]"
+                  placeholder="Cari siswa / kursi..."
+                  className="w-full pl-9 pr-8 py-2 rounded-full bg-[#120D09] border border-white/15 text-xs text-[#FAF5EE] placeholder-[#8C7A6B] focus:outline-none focus:border-[#FAF5EE]/50"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9C8470] hover:text-[#2C1E14] cursor-pointer"
-                    aria-label="Hapus pencarian"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B09E8E] hover:text-[#FAF5EE] cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
             </div>
+
+            {/* 2-Column Action Grid inside the Panel (Persis seperti AI agency / Web design agency di gambar referensi) */}
+            {canEditSeats ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+                <button
+                  type="button"
+                  onClick={handleNormalRotation}
+                  disabled={syncing || loading}
+                  className="text-left group cursor-pointer disabled:opacity-50"
+                >
+                  <div className="font-display font-bold text-sm sm:text-[15px] text-[#FAF5EE] group-hover:text-[#E06D3B] transition-colors flex items-center gap-2">
+                    <span>Rotasi Biasa (Geser 1)</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#E06D3B]" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-[#B09E8E] mt-0.5">
+                    Geser seluruh siswa maju 1 langkah mengikuti pola ular
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleFiveDayRotation}
+                  disabled={syncing || loading}
+                  className="text-left group cursor-pointer disabled:opacity-50"
+                >
+                  <div className="font-display font-bold text-sm sm:text-[15px] text-[#FAF5EE] group-hover:text-[#E06D3B] transition-colors flex items-center gap-2">
+                    <span>Rotasi 5 Hari (Kanan Maju)</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#E06D3B]" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-[#B09E8E] mt-0.5">
+                    Khusus kursi kanan maju 1 baris di kolom yang sama
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRerollSeats}
+                  disabled={syncing || loading}
+                  className="text-left group cursor-pointer disabled:opacity-50"
+                >
+                  <div className="font-display font-bold text-sm sm:text-[15px] text-[#FAF5EE] group-hover:text-[#E06D3B] transition-colors flex items-center gap-2">
+                    <span>Reroll / Acak Tempat Duduk</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#E06D3B]" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-[#B09E8E] mt-0.5">
+                    Acak otomatis posisi 40 kursi secara merata
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(true)}
+                  disabled={syncing || loading}
+                  className="text-left group cursor-pointer disabled:opacity-50"
+                >
+                  <div className="font-display font-bold text-sm sm:text-[15px] text-[#FAF5EE] group-hover:text-rose-400 transition-colors flex items-center gap-2">
+                    <span>Reset Formasi Default</span>
+                    <ArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-rose-400" />
+                  </div>
+                  <div className="text-xs sm:text-sm text-[#B09E8E] mt-0.5">
+                    Kembalikan urutan kursi ke formasi awal (Siswa A – nn)
+                  </div>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
+                <div>
+                  <div className="font-display font-bold text-sm text-[#FAF5EE] flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-[#E06D3B]" />
+                    <span>Akses Hanya Lihat</span>
+                  </div>
+                  <div className="text-xs text-[#B09E8E] mt-0.5">
+                    Urutan tempat duduk diatur oleh Ketua Kelas & Wakil
+                  </div>
+                </div>
+                <div>
+                  <div className="font-display font-bold text-sm text-[#FAF5EE]">
+                    Pola Snake Pattern (5 Baris &times; 4 Kolom)
+                  </div>
+                  <div className="text-xs text-[#B09E8E] mt-0.5">
+                    40 kursi terbagi dalam 20 meja ganda (Kiri & Kanan)
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Papan Tulis / Meja Guru */}
           <div className="mb-8 flex flex-col items-center">
-            <div className="relative w-full max-w-xl">
-              <div className="absolute -inset-x-6 -bottom-3 h-8 bg-[#8C6239]/15 blur-xl rounded-full pointer-events-none" />
-              <div className="relative py-3 px-6 rounded-2xl bg-gradient-to-r from-[#4A3322] via-[#5C3D22] to-[#4A3322] text-[#FFFDF9] shadow-lg border border-[#7A5230] flex items-center justify-center gap-2.5">
-                <Monitor className="w-4 h-4 text-[#DFC7AC]" />
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#FAF5EE]">
-                  Papan Tulis &bull; Depan Kelas
-                </span>
-              </div>
+            <div className="w-full max-w-xl py-2.5 px-6 rounded-full pill-navbar flex items-center justify-center gap-2.5">
+              <Monitor className="w-4 h-4 text-[#E06D3B]" />
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#FAF5EE]">
+                Papan Tulis &bull; Depan Kelas
+              </span>
             </div>
           </div>
 
@@ -783,11 +713,11 @@ export default function Dashboard({ currentUser, onLogin }) {
                   <div key={row} className="space-y-2.5">
                     <div className="flex items-center justify-between px-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#FFFDF9] border border-[#DECBB3] text-xs font-bold text-[#4A3322] shadow-xs">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFFDF9] border border-[#DECBB3] text-xs font-bold text-[#4A3322] shadow-xs">
                           Baris {row + 1}
                         </span>
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold ${
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold ${
                             isEvenRow
                               ? 'bg-[#EFE5D8] text-[#6F4E37] border border-[#DECBB3]'
                               : 'bg-[#F5E6D3] text-[#8C5828] border border-[#DFC29F]'
