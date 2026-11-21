@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <!-- Light Brown Cartoon Badge Gradient -->
+    <linearGradient id="bgGrad" x1="16" y1="12" x2="112" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E6C7A3" />
+      <stop offset="55%" stop-color="#C89D70" />
+      <stop offset="100%" stop-color="#A6794E" />
+    </linearGradient>
+
+    <!-- Warm Cream Inner Ring Gradient -->
+    <linearGradient id="innerGrad" x1="24" y1="20" x2="104" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F7E7D2" />
+      <stop offset="100%" stop-color="#D7B28A" />
+    </linearGradient>
+
+    <!-- Puffy 3D Cartoon Letter Gradient -->
+    <linearGradient id="letterGrad" x1="30" y1="34" x2="96" y2="94" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFDF9" />
+      <stop offset="65%" stop-color="#FBF0E0" />
+      <stop offset="100%" stop-color="#E7CFAF" />
+    </linearGradient>
+
+    <filter id="cartoonShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="4" stdDeviation="0" flood-color="#4A321F" />
+    </filter>
+  </defs>
+
+  <!-- Outer 3D Cartoon Shadow Base -->
+  <rect x="10" y="14" width="108" height="106" rx="34" fill="#4A321F" />
+
+  <!-- Main Light Brown Cartoon Squircle Badge -->
+  <rect
+    x="10"
+    y="8"
+    width="108"
+    height="106"
+    rx="34"
+    fill="url(#bgGrad)"
+    stroke="#4A321F"
+    stroke-width="6"
+  />
+
+  <!-- Inner Soft Light-Brown Frame -->
+  <rect
+    x="19"
+    y="17"
+    width="90"
+    height="88"
+    rx="26"
+    fill="url(#innerGrad)"
+    stroke="#6E4B2E"
+    stroke-width="3"
+  />
+
+  <!-- Top Glossy Cartoon Bubble Shine -->
+  <path
+    d="M32 25C48 20 80 20 96 25"
+    stroke="#FFFDF9"
+    stroke-width="5"
+    stroke-linecap="round"
+    opacity="0.7"
+  />
+  <circle cx="26" cy="30" r="3" fill="#FFFDF9" opacity="0.8" />
+
+  <!-- Cute Cartoon Sparkles -->
+  <path
+    d="M99 28L101 33L106 35L101 37L99 42L97 37L92 35L97 33L99 28Z"
+    fill="#FFFDF9"
+  />
+  <circle cx="29" cy="89" r="3.5" fill="#FFFDF9" opacity="0.85" />
+
+  <!-- Cartoon 3D Letter "X" -->
+  <g filter="url(#cartoonShadow)">
+    <path
+      d="M31 41C28.5 37.5 31 33 35.5 33H43.5C46 33 48 34.5 49.5 37L54 45.5L58.5 37C60 34.5 62 33 64.5 33H72.5C77 33 79.5 37.5 77 41L64 60.5L77.5 80.5C80 84 77.5 88.5 73 88.5H65C62.5 88.5 60.5 87 59 84.5L54 75.5L49 84.5C47.5 87 45.5 88.5 43 88.5H35C30.5 88.5 28 84 30.5 80.5L44 60.5L31 41Z"
+      fill="url(#letterGrad)"
+      stroke="#4A321F"
+      stroke-width="5.5"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <!-- Cartoon 3D Letter "J" -->
+  <g filter="url(#cartoonShadow)">
+    <path
+      d="M84 33H95C98.5 33 101 35.5 101 39V69C101 81 92.5 89 80.5 89C71 89 64.5 83.5 63.5 75.5C63 71.5 66 68.5 70 68.5H75.5C78 68.5 79.5 70 80.2 72C80.8 73.8 82 74.8 83.8 74.8C86.5 74.8 88 72.5 88 68.5V39C88 35.5 85.5 33 84 33Z"
+      fill="#C88A52"
+      stroke="#4A321F"
+      stroke-width="5.5"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M83 33H94C97.5 33 100 35.5 100 39V68C100 80 91.5 88 79.5 88C70 88 64 82.5 63 74.5C62.5 70.5 65.5 67.5 69.5 67.5H74.5C77 67.5 78.5 69 79.2 71C79.8 72.8 81 73.8 82.8 73.8C85.5 73.8 87 71.5 87 67.5V39C87 35.5 84.5 33 83 33Z"
+      fill="url(#letterGrad)"
+      stroke="#4A321F"
+      stroke-width="5.5"
+      stroke-linejoin="round"
+    />
+  </g>
+
+  <!-- Cute Cartoon Letter Highlights -->
+  <path
+    d="M36 38L41 46"
+    stroke="#FFFFFF"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+  <path
+    d="M93 39V52"
+    stroke="#FFFFFF"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+</svg>

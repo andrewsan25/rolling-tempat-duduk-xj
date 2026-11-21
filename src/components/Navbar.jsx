@@ -115,13 +115,17 @@ export default function Navbar({
         <div className="max-w-7xl mx-auto relative" ref={dropdownRef}>
           {/* 1 Baris Memanjang Floating Pill Navbar (Tidak terlipat jadi 2 baris) */}
           <div className="pill-navbar rounded-full px-4 sm:px-5 py-2.5 flex items-center justify-between gap-3 sm:gap-6 whitespace-nowrap">
-            {/* Left: Solid Warm Terracotta/Caramel Circle + Title */}
+            {/* Left: Cartoon Light-Brown "XJ" Icon + Title */}
             <Link
               to="/"
               onClick={() => setAccountDropdownOpen(false)}
               className="flex items-center gap-2.5 pl-0.5 group shrink-0"
             >
-              <span className="w-8 h-8 rounded-full bg-[#E06D3B] group-hover:scale-105 transition-transform block shrink-0 shadow-sm" />
+              <img
+                src="/xj-icon.svg"
+                alt="XJ Logo"
+                className="w-9 h-9 rounded-xl group-hover:scale-105 transition-transform block shrink-0 shadow-sm"
+              />
               <span className="font-display font-bold text-sm tracking-tight text-[#FAF5EE] hidden sm:inline">
                 X-Jentreng 2026
               </span>
